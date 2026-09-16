@@ -1,0 +1,540 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  GYM_OWNER
+  MANAGER
+  FRONT_DESK
+  TRAINER
+  ACCOUNTANT
+}
+
+enum MemberStatus {
+  LEAD
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  FROZEN
+  SUSPENDED
+  CANCELLED
+}
+
+enum GenderType {
+  MALE
+  FEMALE
+  OTHER
+  UNDISCLOSED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  CARD
+  NETBANKING
+  CHEQUE
+  ONLINE_PAYMENT_GATEWAY
+}
+
+enum DeviceProtocol {
+  ZK_LAN_DIRECT
+  ADMS_PUSH
+  ETIMETRACK_DB_SYNC
+}
+
+enum ChannelType {
+  WHATSAPP
+  EMAIL
+  IN_APP
+  SMS
+}
+
+enum MessageStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  REJECTED
+}
+
+// --------------------------------------------------------
+// 1. Tenants & Multi-Tenancy
+// --------------------------------------------------------
+
+model Tenant {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  businessName String   @map("business_name")
+  legalName    String?  @map("legal_name")
+  gstin        String?
+  phone        String
+  email        String
+  address      Json
+  logoUrl      String?  @map("logo_url")
+  currency     String   @default("INR")
+  timezone     String   @default("Asia/Kolkata")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  settings          TenantSettings?
+  users             User[]
+  members           Member[]
+  membershipPlans   MembershipPlan[]
+  memberships       Membership[]
+  invoices          Invoice[]
+  payments          Payment[]
+  refunds           Refund[]
+  devices           Device[]
+  deviceUsers       DeviceUser[]
+  attendanceRecords AttendanceRecord[]
+  templates         NotificationTemplate[]
+  communicationLogs CommunicationLog[]
+  calendarEvents    CalendarEvent[]
+  auditLogs         AuditLog[]
+
+  @@map("tenants")
+}
+
+model TenantSettings {
+  tenantId                     String   @id @map("tenant_id")
+  invoicePrefix                String   @default("INV") @map("invoice_prefix")
+  invoiceFinancialYearRestart  Boolean  @default(true) @map("invoice_financial_year_restart")
+  enableGst                    Boolean  @default(true) @map("enable_gst")
+  gstRatePercentage            Decimal  @default(18.00) @map("gst_rate_percentage") @db.Decimal(5, 2)
+  attendanceDuplicateWindowMin Int      @default(5) @map("attendance_duplicate_window_minutes")
+  autoWhatsappBirthdays        Boolean  @default(false) @map("auto_whatsapp_birthdays")
+  autoWhatsappReminders        Boolean  @default(true) @map("auto_whatsapp_reminders")
+  reminderScheduleDaysBefore   Int[]    @default([7, 3, 1]) @map("reminder_schedule_days_before")
+  createdAt                    DateTime @default(now()) @map("created_at")
+  updatedAt                    DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_settings")
+}
+
+// --------------------------------------------------------
+// 2. Users & Staff Authentication
+// --------------------------------------------------------
+
+model User {
+  id               String    @id @default(uuid())
+  tenantId         String?   @map("tenant_id")
+  email            String
+  passwordHash     String    @map("password_hash")
+  fullName         String    @map("full_name")
+  phone            String?
+  role             UserRole
+  isActive         Boolean   @default(true) @map("is_active")
+  twoFactorSecret  String?   @map("two_factor_secret")
+  twoFactorEnabled Boolean   @default(false) @map("two_factor_enabled")
+  lastLoginAt      DateTime? @map("last_login_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  tenant                  Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedMembers         Member[]               @relation("TrainerMembers")
+  assignedMemberships     Membership[]           @relation("TrainerMemberships")
+  frozenMemberships       MembershipFreezeLog[]  @relation("FrozenByUser")
+  collectedPayments       Payment[]              @relation("PaymentCollectedByUser")
+  processedRefunds        Refund[]               @relation("RefundProcessedByUser")
+  verifiedAttendance      AttendanceRecord[]     @relation("AttendanceVerifiedByUser")
+  auditLogs               AuditLog[]
+
+  @@unique([tenantId, email], name: "uq_tenant_user_email")
+  @@map("users")
+}
+
+// --------------------------------------------------------
+// 3. Member Profiles
+// --------------------------------------------------------
+
+model Member {
+  id                     String       @id @default(uuid())
+  tenantId               String       @map("tenant_id")
+  memberCode             String       @map("member_code")
+  firstName              String       @map("first_name")
+  lastName               String       @map("last_name")
+  gender                 GenderType
+  dateOfBirth            DateTime?    @map("date_of_birth") @db.Date
+  phone                  String
+  whatsappNumber         String?      @map("whatsapp_number")
+  email                  String?
+  photoUrl               String?      @map("photo_url")
+  address                Json?
+  emergencyContactName   String?      @map("emergency_contact_name")
+  emergencyContactPhone  String?      @map("emergency_contact_phone")
+  assignedTrainerId      String?      @map("assigned_trainer_id")
+  status                 MemberStatus @default(ACTIVE)
+  healthMetrics          Json?        @default("{}") @map("health_metrics")
+  customFields           Json?        @default("{}") @map("custom_fields")
+  notes                  String?
+  isDeleted              Boolean      @default(false) @map("is_deleted")
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedTrainer   User?              @relation("TrainerMembers", fields: [assignedTrainerId], references: [id], onDelete: SetNull)
+  memberships       Membership[]
+  invoices          Invoice[]
+  payments          Payment[]
+  deviceUsers       DeviceUser[]
+  attendanceRecords AttendanceRecord[]
+  communicationLogs CommunicationLog[]
+
+  @@unique([tenantId, memberCode], name: "uq_tenant_member_code")
+  @@unique([tenantId, phone], name: "uq_tenant_member_phone")
+  @@index([tenantId, status], name: "idx_members_tenant_status")
+  @@map("members")
+}
+
+// --------------------------------------------------------
+// 4. Membership Plans & Subscriptions
+// --------------------------------------------------------
+
+model MembershipPlan {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  name         String
+  description  String?
+  durationDays Int      @map("duration_days")
+  joiningFee   Decimal  @default(0.00) @map("joining_fee") @db.Decimal(10, 2)
+  basePrice    Decimal  @map("base_price") @db.Decimal(10, 2)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  versions MembershipPlanVersion[]
+
+  @@map("membership_plans")
+}
+
+model MembershipPlanVersion {
+  id            String   @id @default(uuid())
+  planId        String   @map("plan_id")
+  versionNumber Int      @map("version_number")
+  durationDays  Int      @map("duration_days")
+  basePrice     Decimal  @map("base_price") @db.Decimal(10, 2)
+  effectiveFrom DateTime @default(now()) @map("effective_from")
+
+  plan        MembershipPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+
+  @@unique([planId, versionNumber], name: "uq_plan_version")
+  @@map("membership_plan_versions")
+}
+
+model Membership {
+  id                String       @id @default(uuid())
+  tenantId          String       @map("tenant_id")
+  memberId          String       @map("member_id")
+  planVersionId     String       @map("plan_version_id")
+  startDate         DateTime     @map("start_date") @db.Date
+  endDate           DateTime     @map("end_date") @db.Date
+  originalEndDate   DateTime     @map("original_end_date") @db.Date
+  status            MemberStatus @default(ACTIVE)
+  frozenDaysTotal   Int          @default(0) @map("frozen_days_total")
+  assignedTrainerId String?      @map("assigned_trainer_id")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  tenant          Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member          Member                @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  planVersion     MembershipPlanVersion @relation(fields: [planVersionId], references: [id])
+  assignedTrainer User?                 @relation("TrainerMemberships", fields: [assignedTrainerId], references: [id], onDelete: SetNull)
+  freezeLogs      MembershipFreezeLog[]
+  invoices        Invoice[]
+
+  @@map("memberships")
+}
+
+model MembershipFreezeLog {
+  id              String    @id @default(uuid())
+  membershipId    String    @map("membership_id")
+  frozenById      String    @map("frozen_by")
+  freezeStartDate DateTime  @map("freeze_start_date") @db.Date
+  freezeEndDate   DateTime? @map("freeze_end_date") @db.Date
+  reason          String?
+  unfrozenAt      DateTime? @map("unfrozen_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  frozenBy   User       @relation("FrozenByUser", fields: [frozenById], references: [id])
+
+  @@map("membership_freeze_logs")
+}
+
+// --------------------------------------------------------
+// 5. Invoicing, Payments & GST Ledger
+// --------------------------------------------------------
+
+model Invoice {
+  id             String        @id @default(uuid())
+  tenantId       String        @map("tenant_id")
+  invoiceNumber  String        @map("invoice_number")
+  memberId       String        @map("member_id")
+  membershipId   String?       @map("membership_id")
+  subtotal       Decimal       @db.Decimal(12, 2)
+  discountAmount Decimal       @default(0.00) @map("discount_amount") @db.Decimal(12, 2)
+  taxableAmount  Decimal       @map("taxable_amount") @db.Decimal(12, 2)
+  cgstAmount     Decimal       @default(0.00) @map("cgst_amount") @db.Decimal(12, 2)
+  sgstAmount     Decimal       @default(0.00) @map("sgst_amount") @db.Decimal(12, 2)
+  igstAmount     Decimal       @default(0.00) @map("igst_amount") @db.Decimal(12, 2)
+  totalAmount    Decimal       @map("total_amount") @db.Decimal(12, 2)
+  paidAmount     Decimal       @default(0.00) @map("paid_amount") @db.Decimal(12, 2)
+  balanceAmount  Decimal       @map("balance_amount") @db.Decimal(12, 2)
+  status         InvoiceStatus @default(ISSUED)
+  dueDate        DateTime      @map("due_date") @db.Date
+  issuedAt       DateTime      @default(now()) @map("issued_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member     Member        @relation(fields: [memberId], references: [id])
+  membership Membership?   @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  items      InvoiceItem[]
+  payments   Payment[]
+  refunds    Refund[]
+
+  @@unique([tenantId, invoiceNumber], name: "uq_tenant_invoice_number")
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id              String  @id @default(uuid())
+  invoiceId       String  @map("invoice_id")
+  description     String
+  hsnSacCode      String  @default("999723") @map("hsn_sac_code")
+  quantity        Int     @default(1)
+  unitPrice       Decimal @map("unit_price") @db.Decimal(12, 2)
+  taxableValue    Decimal @map("taxable_value") @db.Decimal(12, 2)
+  gstRate         Decimal @default(18.00) @map("gst_rate") @db.Decimal(5, 2)
+  totalItemAmount Decimal @map("total_item_amount") @db.Decimal(12, 2)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id              String      @id @default(uuid())
+  tenantId        String      @map("tenant_id")
+  invoiceId       String      @map("invoice_id")
+  memberId        String      @map("member_id")
+  paymentNumber   String      @map("payment_number")
+  amount          Decimal     @db.Decimal(12, 2)
+  mode            PaymentMode
+  referenceNumber String?     @map("reference_number")
+  collectedById   String      @map("collected_by")
+  paymentDate     DateTime    @default(now()) @map("payment_date")
+  notes           String?
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  member      Member   @relation(fields: [memberId], references: [id])
+  collectedBy User     @relation("PaymentCollectedByUser", fields: [collectedById], references: [id])
+  refunds     Refund[]
+
+  @@unique([tenantId, paymentNumber], name: "uq_tenant_payment_number")
+  @@map("payments")
+}
+
+model Refund {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  paymentId     String   @map("payment_id")
+  invoiceId     String?  @map("invoice_id")
+  refundNumber  String   @map("refund_number")
+  amount        Decimal  @db.Decimal(12, 2)
+  reason        String
+  processedById String   @map("processed_by")
+  refundedAt    DateTime @default(now()) @map("refunded_at")
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  processedBy User     @relation("RefundProcessedByUser", fields: [processedById], references: [id])
+
+  @@unique([tenantId, refundNumber], name: "uq_tenant_refund_number")
+  @@map("refunds")
+}
+
+// --------------------------------------------------------
+// 6. ESSL Biometric Hardware & Attendance
+// --------------------------------------------------------
+
+model Device {
+  id               String         @id @default(uuid())
+  tenantId         String         @map("tenant_id")
+  deviceName       String         @map("device_name")
+  serialNumber     String         @map("serial_number")
+  ipAddress        String?        @map("ip_address")
+  port             Int            @default(4370)
+  protocol         DeviceProtocol @default(ZK_LAN_DIRECT)
+  deviceDirection  String         @default("IN_OUT") @map("device_direction")
+  apiKeyHash       String         @map("api_key_hash")
+  lastHeartbeatAt  DateTime?      @map("last_heartbeat_at")
+  firmwareVersion  String?        @map("firmware_version")
+  isOnline         Boolean        @default(false) @map("is_online")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deviceUsers       DeviceUser[]
+  attendanceRecords AttendanceRecord[]
+
+  @@unique([tenantId, serialNumber], name: "uq_tenant_device_serial")
+  @@map("devices")
+}
+
+model DeviceUser {
+  id                 String   @id @default(uuid())
+  tenantId           String   @map("tenant_id")
+  deviceId           String   @map("device_id")
+  memberId           String   @map("member_id")
+  deviceEnrollmentId Int      @map("device_enrollment_id")
+  cardNumber         String?  @map("card_number")
+  privilege          Int      @default(0)
+  isSynced           Boolean  @default(false) @map("is_synced")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, deviceEnrollmentId], name: "uq_device_enrollment")
+  @@unique([tenantId, memberId, deviceId], name: "uq_tenant_member_device")
+  @@map("device_users")
+}
+
+model AttendanceRecord {
+  id               String   @id @default(uuid())
+  tenantId         String   @map("tenant_id")
+  memberId         String   @map("member_id")
+  deviceId         String?  @map("device_id")
+  punchTime        DateTime @map("punch_time")
+  punchType        String   @default("CHECK_IN") @map("punch_type")
+  verificationMode String   @default("FINGERPRINT") @map("verification_mode")
+  isManualEntry    Boolean  @default(false) @map("is_manual_entry")
+  verifiedById     String?  @map("verified_by")
+  dedupHash        String   @map("dedup_hash")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  tenant     Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member     Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  device     Device? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  verifiedBy User?   @relation("AttendanceVerifiedByUser", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, dedupHash], name: "uq_attendance_dedup")
+  @@index([tenantId, punchTime], name: "idx_attendance_tenant_time")
+  @@index([memberId, punchTime], name: "idx_attendance_member")
+  @@map("attendance_records")
+}
+
+// --------------------------------------------------------
+// 7. Omnichannel Communication & Notifications
+// --------------------------------------------------------
+
+model NotificationTemplate {
+  id             String      @id @default(uuid())
+  tenantId       String?     @map("tenant_id")
+  channel        ChannelType
+  eventType      String      @map("event_type")
+  templateName   String      @map("template_name")
+  metaTemplateId String?     @map("meta_template_id")
+  languageCode   String      @default("en") @map("language_code")
+  subject        String?
+  bodyText       String      @map("body_text")
+  variables      Json?       @default("[]")
+  isActive       Boolean     @default(true) @map("is_active")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  communicationLogs CommunicationLog[]
+
+  @@map("notification_templates")
+}
+
+model CommunicationLog {
+  id                String        @id @default(uuid())
+  tenantId          String        @map("tenant_id")
+  memberId          String?       @map("member_id")
+  channel           ChannelType
+  recipient         String
+  templateId        String?       @map("template_id")
+  messageContent    String        @map("message_content")
+  externalMessageId String?       @map("external_message_id")
+  status            MessageStatus @default(QUEUED)
+  errorMessage      String?       @map("error_message")
+  retryCount        Int           @default(0) @map("retry_count")
+  deliveredAt       DateTime?     @map("delivered_at")
+  readAt            DateTime?     @map("read_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  tenant   Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member   Member?               @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  template NotificationTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@map("communication_logs")
+}
+
+// --------------------------------------------------------
+// 8. Calendar Events & Audit Logs
+// --------------------------------------------------------
+
+model CalendarEvent {
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  title             String
+  description       String?
+  eventDate         DateTime @map("event_date") @db.Date
+  isRecurringYearly Boolean  @default(false) @map("is_recurring_yearly")
+  eventType         String   @default("ANNIVERSARY") @map("event_type")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("calendar_events")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  userId     String?  @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  oldValues  Json?    @map("old_values")
+  newValues  Json?    @map("new_values")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
