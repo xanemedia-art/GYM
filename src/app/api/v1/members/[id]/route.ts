@@ -21,6 +21,7 @@ const updateMemberSchema = z.object({
   status: z.nativeEnum(MemberStatus).optional(),
   healthMetrics: z.record(z.string(), z.any()).optional(),
   notes: z.string().optional(),
+  doorLockUid: z.string().optional(),
 });
 
 export async function GET(
@@ -148,6 +149,12 @@ export async function PATCH(
         ...(data.status && { status: data.status }),
         ...(data.healthMetrics && { healthMetrics: data.healthMetrics as any }),
         ...(data.notes !== undefined && { notes: data.notes }),
+        ...(data.doorLockUid !== undefined && {
+          customFields: {
+            ...((existing.customFields as Record<string, any>) || {}),
+            doorLockUid: data.doorLockUid,
+          },
+        }),
       },
     });
 

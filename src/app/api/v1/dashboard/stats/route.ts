@@ -108,6 +108,45 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // 6. Upcoming Month Forecast Outlook
+    const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
+    const nextMonthIndex = nextMonthDate.getMonth();
+
+    const [nextMonthExpiringCount, nextMonthEventsCount] = await Promise.all([
+      prisma.membership.count({
+        where: {
+          tenantId,
+          status: "ACTIVE",
+          endDate: { gte: nextMonthDate, lte: nextMonthEnd },
+        },
+      }),
+      prisma.calendarEvent.count({
+        where: {
+          tenantId,
+          OR: [
+            { eventDate: { gte: nextMonthDate, lte: nextMonthEnd } },
+            { isRecurringYearly: true },
+          ],
+        },
+      }),
+    ]);
+
+    const nextMonthBirthdaysCount = allMembersWithDob.filter((m) => {
+      if (!m.dateOfBirth) return false;
+      const d = new Date(m.dateOfBirth);
+      return d.getUTCMonth() === nextMonthIndex;
+    }).length;
+
+    const upcomingMonth = {
+      monthName: nextMonthDate.toLocaleString("default", { month: "long" }),
+      year: nextMonthDate.getFullYear(),
+      monthNumber: nextMonthIndex + 1,
+      expiringMembers: nextMonthExpiringCount,
+      birthdays: nextMonthBirthdaysCount,
+      events: nextMonthEventsCount,
+    };
+
     return apiSuccess({
       members: {
         total: totalMembers,
@@ -129,6 +168,7 @@ export async function GET(req: NextRequest) {
         tomorrow: tomorrowBirthdays,
       },
       devices,
+      upcomingMonth,
     });
   } catch (error: any) {
     console.error("Dashboard Stats API Error:", error);

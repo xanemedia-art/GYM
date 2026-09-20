@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { OnboardMemberModal } from "@/components/members/OnboardMemberModal";
-import { Search, UserPlus, Phone, MessageCircle, CheckCircle2, AlertTriangle, XCircle, ArrowUpRight } from "lucide-react";
+import { CustomPaymentModal } from "@/components/billing/CustomPaymentModal";
+import { Search, UserPlus, Phone, MessageCircle, CheckCircle2, AlertTriangle, XCircle, ArrowUpRight, Zap } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 interface MembersClientProps {
@@ -25,6 +26,7 @@ export default function MembersClient({ user }: MembersClientProps) {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [isOnboardOpen, setIsOnboardOpen] = useState(false);
+  const [selectedMemberForPayment, setSelectedMemberForPayment] = useState<any | null>(null);
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -61,28 +63,30 @@ export default function MembersClient({ user }: MembersClientProps) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">Member Directory</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Manage gym enrollments, KYC details, fitness metrics, and subscriptions</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Manage member profiles, active packages, KYC documents, and send payment links
+            </p>
           </div>
 
           <button
             onClick={() => setIsOnboardOpen(true)}
-            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm shadow-emerald-600/20 flex items-center gap-2 self-start sm:self-auto transition-all"
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/30 flex items-center gap-2 self-start sm:self-auto transition-all active:scale-95"
           >
             <UserPlus className="h-4 w-4" />
-            <span>Onboard Member</span>
+            <span>Add Member</span>
           </button>
         </div>
 
-        {/* Filters and Search Bar */}
+        {/* Filter & Search Bar */}
         <div className="flex flex-col sm:flex-row gap-3">
           <form onSubmit={handleSearchSubmit} className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by name, phone (+91), or member code..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 shadow-xs font-medium"
+              placeholder="Search by member name, phone, or membership code..."
+              className="w-full bg-white border border-slate-200/90 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
             />
           </form>
 
@@ -90,12 +94,13 @@ export default function MembersClient({ user }: MembersClientProps) {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-semibold focus:outline-none focus:border-emerald-600 shadow-xs cursor-pointer"
+              className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:outline-hidden focus:border-emerald-500 shadow-2xs"
             >
               <option value="">All Statuses</option>
-              <option value="ACTIVE">Active Members</option>
+              <option value="ACTIVE">Active Only</option>
               <option value="EXPIRING_SOON">Expiring Soon</option>
               <option value="EXPIRED">Expired</option>
+              <option value="FROZEN">Frozen</option>
             </select>
           </div>
         </div>
@@ -109,7 +114,7 @@ export default function MembersClient({ user }: MembersClientProps) {
                   <th className="px-5 py-3.5">Member</th>
                   <th className="px-5 py-3.5">Contact</th>
                   <th className="px-5 py-3.5">Gender</th>
-                  <th className="px-5 py-3.5">Trainer</th>
+                  <th className="px-5 py-3.5">Active Package</th>
                   <th className="px-5 py-3.5">Joined On</th>
                   <th className="px-5 py-3.5">Status</th>
                   <th className="px-5 py-3.5 text-right">Actions</th>
@@ -142,10 +147,12 @@ export default function MembersClient({ user }: MembersClientProps) {
                       </td>
                       <td className="px-5 py-3.5 capitalize font-medium text-slate-600">{member.gender.toLowerCase()}</td>
                       <td className="px-5 py-3.5">
-                        {member.assignedTrainer?.fullName ? (
-                          <span className="font-semibold text-slate-800">{member.assignedTrainer.fullName}</span>
+                        {member.memberships && member.memberships.length > 0 ? (
+                          <span className="font-semibold text-slate-800">
+                            {member.memberships[0]?.planVersion?.plan?.name || "Active Plan"}
+                          </span>
                         ) : (
-                          <span className="text-slate-400 font-normal">Unassigned</span>
+                          <span className="text-slate-400 font-normal">No Active Plan</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-slate-500 font-medium">{formatDate(member.createdAt)}</td>
@@ -168,15 +175,33 @@ export default function MembersClient({ user }: MembersClientProps) {
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <a
-                          href={`https://wa.me/91${member.phone.replace(/\D/g, "").slice(-10)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 text-[11px] font-bold transition-all shadow-xs"
-                        >
-                          <MessageCircle className="h-3 w-3" />
-                          <span>WhatsApp</span>
-                        </a>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() =>
+                              setSelectedMemberForPayment({
+                                id: member.id,
+                                name: `${member.firstName} ${member.lastName}`,
+                                phone: member.phone,
+                                email: member.email,
+                              })
+                            }
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/80 text-[11px] font-bold transition-all shadow-2xs"
+                            title="Send custom payment link via WhatsApp"
+                          >
+                            <Zap className="h-3 w-3 text-indigo-600" />
+                            <span className="hidden sm:inline">Pay Link</span>
+                          </button>
+
+                          <a
+                            href={`https://wa.me/91${member.phone.replace(/\D/g, "").slice(-10)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 text-[11px] font-bold transition-all shadow-2xs"
+                          >
+                            <MessageCircle className="h-3 w-3" />
+                            <span className="hidden sm:inline">Chat</span>
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -197,6 +222,12 @@ export default function MembersClient({ user }: MembersClientProps) {
         isOpen={isOnboardOpen}
         onClose={() => setIsOnboardOpen(false)}
         onSuccess={fetchMembers}
+      />
+
+      <CustomPaymentModal
+        isOpen={!!selectedMemberForPayment}
+        onClose={() => setSelectedMemberForPayment(null)}
+        defaultMember={selectedMemberForPayment || undefined}
       />
     </AppLayout>
   );

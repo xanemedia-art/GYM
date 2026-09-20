@@ -126,6 +126,8 @@ model TenantSettings {
   autoWhatsappBirthdays        Boolean  @default(false) @map("auto_whatsapp_birthdays")
   autoWhatsappReminders        Boolean  @default(true) @map("auto_whatsapp_reminders")
   reminderScheduleDaysBefore   Int[]    @default([7, 3, 1]) @map("reminder_schedule_days_before")
+  upiId                        String?  @map("upi_id")
+  upiMerchantName              String?  @map("upi_merchant_name")
   createdAt                    DateTime @default(now()) @map("created_at")
   updatedAt                    DateTime @updatedAt @map("updated_at")
 

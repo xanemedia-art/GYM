@@ -20,6 +20,7 @@ const createMemberSchema = z.object({
   assignedTrainerId: z.string().optional().nullable(),
   healthMetrics: z.record(z.string(), z.any()).optional(),
   notes: z.string().optional(),
+  doorLockUid: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -145,10 +146,36 @@ export async function POST(req: NextRequest) {
         emergencyContactPhone: data.emergencyContactPhone || null,
         assignedTrainerId: data.assignedTrainerId || null,
         healthMetrics: (data.healthMetrics as any) || {},
+        customFields: data.doorLockUid ? { doorLockUid: data.doorLockUid } : {},
         notes: data.notes || null,
         status: MemberStatus.ACTIVE,
       },
     });
+
+    // If doorLockUid is set and tenant has devices, link DeviceUser
+    if (data.doorLockUid) {
+      try {
+        const primaryDevice = await prisma.device.findFirst({
+          where: { tenantId: session.tenantId },
+          orderBy: { createdAt: "asc" },
+        });
+        if (primaryDevice) {
+          const numericEnrollmentId = parseInt(data.doorLockUid.replace(/\D/g, ""), 10) || Math.floor(1000 + Math.random() * 9000);
+          await prisma.deviceUser.create({
+            data: {
+              tenantId: session.tenantId,
+              memberId: member.id,
+              deviceId: primaryDevice.id,
+              deviceEnrollmentId: numericEnrollmentId,
+              cardNumber: data.doorLockUid,
+              isSynced: true,
+            },
+          });
+        }
+      } catch (devErr) {
+        console.warn("Could not create initial DeviceUser:", devErr);
+      }
+    }
 
     // Create Audit Log
     await prisma.auditLog.create({

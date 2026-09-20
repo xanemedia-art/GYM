@@ -1,13 +1,14 @@
 "use client";
 
 import React from "react";
-import { UserPlus, CreditCard, Fingerprint, MessageSquare, Share2 } from "lucide-react";
+import { UserPlus, CreditCard, Fingerprint, MessageSquare, Share2, Zap } from "lucide-react";
 
 interface QuickActionsProps {
   onAddMember: () => void;
   onCollectPayment: () => void;
   onManualPunch: () => void;
   onShareInvite?: () => void;
+  onCustomPayment?: () => void;
 }
 
 export function QuickActions({
@@ -15,6 +16,7 @@ export function QuickActions({
   onCollectPayment,
   onManualPunch,
   onShareInvite,
+  onCustomPayment,
 }: QuickActionsProps) {
   const actions = [
     {
@@ -26,17 +28,24 @@ export function QuickActions({
     },
     {
       title: "Share Join Link",
-      desc: "Client self-registration",
+      desc: "Client registration",
       icon: Share2,
       onClick: onShareInvite || (() => {}),
       iconColor: "bg-teal-50 text-teal-600 border-teal-100 group-hover:bg-teal-600 group-hover:text-white",
     },
     {
-      title: "Collect Payment",
-      desc: "Cash / UPI / Card POS",
+      title: "Collect Fee (POS)",
+      desc: "Cash / UPI / Card",
       icon: CreditCard,
       onClick: onCollectPayment,
       iconColor: "bg-blue-50 text-blue-600 border-blue-100 group-hover:bg-blue-600 group-hover:text-white",
+    },
+    {
+      title: "Custom Link",
+      desc: "Send custom amount",
+      icon: Zap,
+      onClick: onCustomPayment || (() => {}),
+      iconColor: "bg-indigo-50 text-indigo-600 border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white",
     },
     {
       title: "Manual Punch",
@@ -47,7 +56,7 @@ export function QuickActions({
     },
     {
       title: "Send Reminders",
-      desc: "WhatsApp dues & expiry",
+      desc: "WhatsApp dues scan",
       icon: MessageSquare,
       onClick: async () => {
         try {
@@ -63,7 +72,7 @@ export function QuickActions({
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
       {actions.map((action) => {
         const Icon = action.icon;
         return (

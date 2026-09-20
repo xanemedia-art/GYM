@@ -83,6 +83,24 @@ export async function POST(req: NextRequest) {
 
     const { memberId, membershipId, basePrice, discountAmount, description, dueDate, isInterState } = parsed.data;
 
+    // Multi-Tenant IDOR Guard: Verify member belongs to current tenant
+    const member = await prisma.member.findFirst({
+      where: { id: memberId, tenantId: session.tenantId, isDeleted: false },
+    });
+
+    if (!member) {
+      return apiError("Member not found in current gym branch", "NOT_FOUND", 404);
+    }
+
+    if (membershipId) {
+      const membership = await prisma.membership.findFirst({
+        where: { id: membershipId, tenantId: session.tenantId, memberId: member.id },
+      });
+      if (!membership) {
+        return apiError("Membership not found for this member in current branch", "NOT_FOUND", 404);
+      }
+    }
+
     const tenantSettings = await prisma.tenantSettings.findUnique({
       where: { tenantId: session.tenantId },
     });

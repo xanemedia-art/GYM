@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Dumbbell,
   CheckCircle2,
@@ -179,11 +180,18 @@ export default function ClientOnboardClient({ token }: ClientOnboardClientProps)
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Gym Brand Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20 font-black mb-1">
-            <Dumbbell className="h-6 w-6" />
+          <div className="inline-flex items-center justify-center h-16 w-auto mb-1">
+            <Image
+              src="/bff-logo.png"
+              alt="Be Free Fitness"
+              width={180}
+              height={60}
+              className="h-14 w-auto object-contain"
+              priority
+            />
           </div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900">
-            {tenant?.businessName}
+            {tenant?.businessName || "Be Free Fitness"}
           </h1>
           <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
             <span className="flex items-center gap-1 font-medium text-slate-700">

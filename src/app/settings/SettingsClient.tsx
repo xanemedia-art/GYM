@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { UpiStandeeCard } from "@/components/settings/UpiStandeeCard";
 import {
   Settings,
   Building2,
@@ -142,10 +143,48 @@ export default function SettingsClient({ user }: SettingsClientProps) {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const [profileForm, setProfileForm] = useState({
+    businessName: tenant?.businessName || "Be Free Fitness",
+    legalName: tenant?.legalName || "Be Free Fitness Private Limited",
+    gstin: tenant?.gstin || "07AAAAF1234F1Z5",
+    phone: tenant?.phone || "+91 9876543210",
+    invoicePrefix: settings?.invoicePrefix || "BFF",
+    gstRatePercentage: settings?.gstRatePercentage ? Number(settings.gstRatePercentage) : 18.0,
+    attendanceDuplicateWindowMin: settings?.attendanceDuplicateWindowMin || 5,
+    autoWhatsappBirthdays: settings?.autoWhatsappBirthdays ?? true,
+    autoWhatsappReminders: settings?.autoWhatsappReminders ?? true,
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setSavingSettings(true);
+    try {
+      const res = await fetch("/api/v1/tenants", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileForm),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error?.message || "Failed to update settings");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) {
+      alert(err.message || "Failed to save settings");
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleSaveUpi = async (upiId: string, upiMerchantName: string) => {
+    const res = await fetch("/api/v1/tenants", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ upiId, upiMerchantName }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || "Failed to update UPI settings");
+    fetchBranches();
   };
 
   const isOwnerOrAdmin = user.role === "GYM_OWNER" || user.role === "SUPER_ADMIN";
@@ -308,7 +347,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Branch Name</label>
                 <input
                   type="text"
-                  defaultValue={tenant?.businessName || "FitZone Elite Club"}
+                  value={profileForm.businessName}
+                  onChange={(e) => setProfileForm({ ...profileForm, businessName: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 />
               </div>
@@ -317,7 +357,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Legal Registered Entity</label>
                 <input
                   type="text"
-                  defaultValue={tenant?.legalName || "FitZone Fitness Private Limited"}
+                  value={profileForm.legalName}
+                  onChange={(e) => setProfileForm({ ...profileForm, legalName: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 />
               </div>
@@ -326,7 +367,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">GSTIN Number (India)</label>
                 <input
                   type="text"
-                  defaultValue={tenant?.gstin || "07AAAAF1234F1Z5"}
+                  value={profileForm.gstin}
+                  onChange={(e) => setProfileForm({ ...profileForm, gstin: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 />
               </div>
@@ -335,12 +377,21 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Official Contact Phone</label>
                 <input
                   type="text"
-                  defaultValue={tenant?.phone || "+91 9876543210"}
+                  value={profileForm.phone}
+                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 />
               </div>
             </div>
           </div>
+
+          {/* 2. Branch Counter UPI ID & Printable Standee QR Generator */}
+          <UpiStandeeCard
+            initialUpiId={settings?.upiId}
+            initialMerchantName={settings?.upiMerchantName || tenant?.businessName || "Be Free Fitness"}
+            gymName={tenant?.businessName || "Be Free Fitness"}
+            onSave={handleSaveUpi}
+          />
 
           {/* Invoicing & GST */}
           <div className="rounded-2xl bg-white border border-slate-200/90 p-6 shadow-xs space-y-4">
@@ -356,17 +407,19 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Branch Invoice Prefix</label>
                 <input
                   type="text"
-                  defaultValue={settings?.invoicePrefix || "FZ"}
+                  value={profileForm.invoicePrefix}
+                  onChange={(e) => setProfileForm({ ...profileForm, invoicePrefix: e.target.value.toUpperCase() })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
-                <span className="text-[10px] text-slate-400 mt-1 block">E.g., FZ/26-27/0001</span>
+                <span className="text-[10px] text-slate-400 mt-1 block">E.g., BFF-DELHI/26-27/0001</span>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">GST Rate (%)</label>
                 <input
                   type="number"
-                  defaultValue={settings?.gstRatePercentage ? Number(settings.gstRatePercentage) : 18.0}
+                  value={profileForm.gstRatePercentage}
+                  onChange={(e) => setProfileForm({ ...profileForm, gstRatePercentage: parseFloat(e.target.value) || 0 })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">SAC 999723 standard rate</span>
@@ -376,7 +429,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Punch Dedup Window (Mins)</label>
                 <input
                   type="number"
-                  defaultValue={settings?.attendanceDuplicateWindowMin || 5}
+                  value={profileForm.attendanceDuplicateWindowMin}
+                  onChange={(e) => setProfileForm({ ...profileForm, attendanceDuplicateWindowMin: parseInt(e.target.value) || 1 })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">Drop turnstile echo punches</span>
@@ -399,7 +453,12 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                   <div className="text-xs font-bold text-slate-900">Automated WhatsApp Birthday Greetings</div>
                   <div className="text-[11px] text-slate-500">Dispatch celebratory greetings at 06:00 AM IST to birthday members</div>
                 </div>
-                <input type="checkbox" defaultChecked={settings?.autoWhatsappBirthdays ?? true} className="h-4 w-4 accent-emerald-600 rounded" />
+                <input
+                  type="checkbox"
+                  checked={profileForm.autoWhatsappBirthdays}
+                  onChange={(e) => setProfileForm({ ...profileForm, autoWhatsappBirthdays: e.target.checked })}
+                  className="h-4 w-4 accent-emerald-600 rounded"
+                />
               </label>
 
               <label className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
@@ -407,17 +466,23 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                   <div className="text-xs font-bold text-slate-900">Automated Expiry & Renewal Reminders</div>
                   <div className="text-[11px] text-slate-500">Notify members 7 days, 3 days, and 1 day before membership expiry</div>
                 </div>
-                <input type="checkbox" defaultChecked={settings?.autoWhatsappReminders ?? true} className="h-4 w-4 accent-emerald-600 rounded" />
+                <input
+                  type="checkbox"
+                  checked={profileForm.autoWhatsappReminders}
+                  onChange={(e) => setProfileForm({ ...profileForm, autoWhatsappReminders: e.target.checked })}
+                  className="h-4 w-4 accent-emerald-600 rounded"
+                />
               </label>
             </div>
           </div>
 
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-600/30 flex items-center gap-2 transition-all active:scale-95"
+            disabled={savingSettings}
+            className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-600/30 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
           >
-            <Save className="h-4 w-4" />
-            <span>Save Configuration</span>
+            {savingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            <span>{savingSettings ? "Saving Changes..." : "Save Configuration"}</span>
           </button>
         </form>
 
@@ -457,7 +522,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                     <input
                       required
                       type="text"
-                      placeholder="e.g. FitZone Platinum (Hyderabad)"
+                      placeholder="e.g. Be Free Fitness (Hyderabad)"
                       value={branchForm.businessName}
                       onChange={(e) => {
                         const name = e.target.value;

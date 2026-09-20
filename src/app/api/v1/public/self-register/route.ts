@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifyClientInviteToken } from "@/lib/invites";
 import { calculateGst, formatInvoiceNumber, getIndianFinancialYear, GYM_HSN_SAC_CODE } from "@/lib/gst";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { GenderType, MemberStatus, InvoiceStatus } from "@prisma/client";
 
@@ -23,6 +24,12 @@ const selfRegisterSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rateLimit = checkRateLimit(`self_reg_get:${ip}`, 30, 60);
+    if (!rateLimit.allowed) {
+      return apiError(`Too many requests. Please wait ${rateLimit.resetSeconds}s.`, "RATE_LIMITED", 429);
+    }
+
     const { searchParams } = new URL(req.url);
     const token = searchParams.get("token");
 
@@ -80,6 +87,16 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rateLimit = checkRateLimit(`self_reg_post:${ip}`, 10, 60);
+    if (!rateLimit.allowed) {
+      return apiError(
+        `Registration rate limit exceeded. Please wait ${rateLimit.resetSeconds}s before attempting again.`,
+        "RATE_LIMITED",
+        429
+      );
+    }
+
     const body = await req.json();
     const parsed = selfRegisterSchema.safeParse(body);
     if (!parsed.success) {

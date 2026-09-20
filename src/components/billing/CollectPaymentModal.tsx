@@ -1,16 +1,22 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
-import { X, CreditCard, IndianRupee, QrCode, Banknote, AlertCircle, Check } from "lucide-react";
+import { X, CreditCard, IndianRupee, QrCode, Banknote, AlertCircle, Check, Share2, ExternalLink, Loader2 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
+import { buildUpiUri, generateQrDataUrl } from "@/lib/upi";
 
 interface CollectPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  defaultMemberId?: string;
 }
 
-export function CollectPaymentModal({ isOpen, onClose, onSuccess }: CollectPaymentModalProps) {
+export function CollectPaymentModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  defaultMemberId,
+}: CollectPaymentModalProps) {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
@@ -19,6 +25,13 @@ export function CollectPaymentModal({ isOpen, onClose, onSuccess }: CollectPayme
   const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Dynamic UPI State
+  const [upiId, setUpiId] = useState<string>("befreefitness@icici");
+  const [merchantName, setMerchantName] = useState<string>("Be Free Fitness");
+  const [dynamicQrUrl, setDynamicQrUrl] = useState<string | null>(null);
+  const [sendingLink, setSendingLink] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -29,14 +42,51 @@ export function CollectPaymentModal({ isOpen, onClose, onSuccess }: CollectPayme
           if (json.success && json.data) {
             setInvoices(json.data);
             if (json.data.length > 0) {
-              setSelectedInvoiceId(json.data[0].id);
-              setAmount(String(json.data[0].balanceAmount));
+              const matched = defaultMemberId
+                ? json.data.find((inv: any) => inv.memberId === defaultMemberId || inv.member?.id === defaultMemberId)
+                : null;
+              const target = matched || json.data[0];
+              setSelectedInvoiceId(target.id);
+              setAmount(String(target.balanceAmount));
+            }
+          }
+        })
+        .catch(console.error);
+
+      // Fetch active branch UPI ID
+      fetch("/api/v1/tenants")
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success && json.data) {
+            const current = json.data.find((t: any) => t.isCurrent);
+            if (current) {
+              if (current.upiId) setUpiId(current.upiId);
+              if (current.upiMerchantName || current.businessName) {
+                setMerchantName(current.upiMerchantName || current.businessName);
+              }
             }
           }
         })
         .catch(console.error);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (mode === "UPI" && amount && parseFloat(amount) > 0) {
+      const selectedInv = invoices.find((i) => i.id === selectedInvoiceId);
+      const uri = buildUpiUri({
+        pa: upiId || "befreefitness@icici",
+        pn: merchantName || "Be Free Fitness",
+        am: parseFloat(amount),
+        tn: selectedInv ? selectedInv.invoiceNumber : "Fee Payment",
+      });
+      generateQrDataUrl(uri, 220)
+        .then((url) => setDynamicQrUrl(url))
+        .catch(console.error);
+    } else {
+      setDynamicQrUrl(null);
+    }
+  }, [mode, amount, selectedInvoiceId, upiId, merchantName, invoices]);
 
   if (!isOpen) return null;
 
@@ -45,6 +95,41 @@ export function CollectPaymentModal({ isOpen, onClose, onSuccess }: CollectPayme
     const inv = invoices.find((i) => i.id === id);
     if (inv) {
       setAmount(String(inv.balanceAmount));
+    }
+  };
+
+  const handleSendRazorpayLink = async () => {
+    if (!selectedInvoiceId) return;
+    setSendingLink(true);
+    try {
+      const res = await fetch("/api/v1/payments/generate-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invoiceId: selectedInvoiceId,
+          amount: parseFloat(amount) || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        const inv = invoices.find((i) => i.id === selectedInvoiceId);
+        const msg = encodeURIComponent(
+          `🏋️ *${merchantName}*\n\n` +
+          `Hi! Here is your secure payment link for Invoice *${json.data.invoiceNumber}* (${formatINR(json.data.amount)}):\n` +
+          `${json.data.paymentLink}\n\n` +
+          `You can pay via UPI, Credit/Debit Card, or NetBanking. Thank you!`
+        );
+        const phone = inv?.member?.phone?.replace(/\D/g, "").slice(-10);
+        window.open(phone ? `https://wa.me/91${phone}?text=${msg}` : `https://wa.me/?text=${msg}`, "_blank");
+        setLinkSent(true);
+        setTimeout(() => setLinkSent(false), 4000);
+      } else {
+        alert(json.error?.message || "Failed to generate online payment link");
+      }
+    } catch (e) {
+      alert("Error sending payment link");
+    } finally {
+      setSendingLink(false);
     }
   };
 
@@ -176,6 +261,50 @@ export function CollectPaymentModal({ isOpen, onClose, onSuccess }: CollectPayme
               })}
             </div>
           </div>
+
+          {/* Dynamic On-Screen UPI QR Code Card */}
+          {mode === "UPI" && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center gap-3.5 animate-in fade-in duration-150">
+              <div className="bg-white p-1.5 rounded-xl shadow-2xs border border-slate-200 shrink-0">
+                {dynamicQrUrl ? (
+                  <img src={dynamicQrUrl} alt="UPI Payment QR" className="h-24 w-24 object-contain rounded-lg" />
+                ) : (
+                  <div className="h-24 w-24 flex items-center justify-center text-[10px] text-slate-400 font-medium">
+                    Generating...
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>Scan to Pay {formatINR(parseFloat(amount) || 0)}</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                    Auto-Filled
+                  </span>
+                </div>
+                <div className="text-[11px] font-mono text-emerald-800 font-bold truncate">
+                  {upiId}
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  Scan with GPay, PhonePe, Paytm, or BHIM. Amount pre-filled.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleSendRazorpayLink}
+                  disabled={sendingLink || !selectedInvoiceId}
+                  className="mt-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 hover:underline"
+                >
+                  {sendingLink ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : linkSent ? (
+                    <Check className="h-3 w-3 text-emerald-600" />
+                  ) : (
+                    <Share2 className="h-3 w-3" />
+                  )}
+                  <span>{linkSent ? "Razorpay Link Sent on WhatsApp!" : "Send Razorpay Online Link via WhatsApp"}</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Reference Number for UPI or Card */}
           {mode !== "CASH" && (

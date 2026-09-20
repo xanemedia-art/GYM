@@ -2,8 +2,19 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { UserRole } from "@prisma/client";
 
+const DEFAULT_DEV_SECRET = "gym-saas-development-secret-jwt-key-2026-very-secure-32chars";
+
+if (
+  process.env.NODE_ENV === "production" &&
+  (!process.env.JWT_SECRET || process.env.JWT_SECRET === DEFAULT_DEV_SECRET)
+) {
+  console.error(
+    "FATAL CRITICAL SECURITY WARNING: Default development JWT_SECRET is active in production environment! Set a unique 32+ character JWT_SECRET in environment variables immediately."
+  );
+}
+
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "gym-saas-development-secret-jwt-key-2026-very-secure-32chars"
+  process.env.JWT_SECRET || DEFAULT_DEV_SECRET
 );
 
 export const SESSION_COOKIE_NAME = "gms_session";

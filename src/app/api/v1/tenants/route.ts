@@ -25,9 +25,14 @@ export async function GET(req: NextRequest) {
       return apiError("Unauthorized", "UNAUTHORIZED", 401);
     }
 
-    // Retrieve all active gym branches
+    // Scope tenants: Staff only see their assigned branch; Owners/SuperAdmins see their network
+    const whereClause: any = { isActive: true };
+    if (session.role !== "SUPER_ADMIN" && session.role !== "GYM_OWNER") {
+      whereClause.id = session.tenantId || "none";
+    }
+
     const tenants = await prisma.tenant.findMany({
-      where: { isActive: true },
+      where: whereClause,
       include: {
         settings: true,
         _count: {
@@ -49,8 +54,9 @@ export async function GET(req: NextRequest) {
       phone: t.phone,
       email: t.email,
       address: t.address,
-      currency: t.currency,
-      invoicePrefix: t.settings?.invoicePrefix || "FZ",
+      invoicePrefix: t.settings?.invoicePrefix || "BFF",
+      upiId: t.settings?.upiId || null,
+      upiMerchantName: t.settings?.upiMerchantName || t.businessName,
       memberCount: t._count.members,
       staffCount: t._count.users,
       isCurrent: t.id === session.tenantId,
@@ -184,5 +190,100 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Create Tenant Error:", error);
     return apiError("Failed to create gym branch", "SERVER_ERROR", 500);
+  }
+}
+
+const updateSettingsSchema = z.object({
+  businessName: z.string().min(2).optional(),
+  legalName: z.string().optional().nullable(),
+  gstin: z.string().optional().nullable(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  upiId: z.string().optional().nullable(),
+  upiMerchantName: z.string().optional().nullable(),
+  invoicePrefix: z.string().optional(),
+  gstRatePercentage: z.number().optional(),
+  attendanceDuplicateWindowMin: z.number().optional(),
+  autoWhatsappBirthdays: z.boolean().optional(),
+  autoWhatsappReminders: z.boolean().optional(),
+});
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const session = await getSession();
+    if (!session || !session.tenantId) {
+      return apiError("Unauthorized", "UNAUTHORIZED", 401);
+    }
+    const tenantId: string = session.tenantId;
+
+    if (session.role !== "GYM_OWNER" && session.role !== "SUPER_ADMIN" && session.role !== "MANAGER") {
+      return apiError("Only gym managers and owners can update branch settings", "FORBIDDEN", 403);
+    }
+
+    const body = await req.json();
+    const parsed = updateSettingsSchema.safeParse(body);
+    if (!parsed.success) {
+      return apiError("Validation error", "VALIDATION_ERROR", 400, parsed.error.format());
+    }
+
+    const {
+      businessName,
+      legalName,
+      gstin,
+      phone,
+      email,
+      upiId,
+      upiMerchantName,
+      invoicePrefix,
+      gstRatePercentage,
+      attendanceDuplicateWindowMin,
+      autoWhatsappBirthdays,
+      autoWhatsappReminders,
+    } = parsed.data;
+
+    const updated = await prisma.$transaction(async (tx) => {
+      // 1. Update Tenant profile
+      const tenant = await tx.tenant.update({
+        where: { id: tenantId },
+        data: {
+          ...(businessName ? { businessName } : {}),
+          ...(legalName !== undefined ? { legalName } : {}),
+          ...(gstin !== undefined ? { gstin } : {}),
+          ...(phone ? { phone } : {}),
+          ...(email ? { email } : {}),
+        },
+      });
+
+      // 2. Upsert Tenant Settings
+      const settings = await tx.tenantSettings.upsert({
+        where: { tenantId },
+        create: {
+          tenantId,
+          upiId: upiId || null,
+          upiMerchantName: upiMerchantName || businessName || tenant.businessName,
+          invoicePrefix: invoicePrefix || "BFF",
+          gstRatePercentage: gstRatePercentage !== undefined ? gstRatePercentage : 18.0,
+          attendanceDuplicateWindowMin: attendanceDuplicateWindowMin !== undefined ? attendanceDuplicateWindowMin : 5,
+          autoWhatsappBirthdays: autoWhatsappBirthdays ?? true,
+          autoWhatsappReminders: autoWhatsappReminders ?? true,
+        },
+        update: {
+          ...(upiId !== undefined ? { upiId } : {}),
+          ...(upiMerchantName !== undefined ? { upiMerchantName } : {}),
+          ...(invoicePrefix ? { invoicePrefix } : {}),
+          ...(gstRatePercentage !== undefined ? { gstRatePercentage } : {}),
+          ...(attendanceDuplicateWindowMin !== undefined ? { attendanceDuplicateWindowMin } : {}),
+          ...(autoWhatsappBirthdays !== undefined ? { autoWhatsappBirthdays } : {}),
+          ...(autoWhatsappReminders !== undefined ? { autoWhatsappReminders } : {}),
+        },
+      });
+
+      return { ...tenant, settings };
+    });
+
+    return apiSuccess(updated);
+  } catch (error: any) {
+    console.error("Update Tenant Settings Error:", error);
+    return apiError("Failed to update branch settings", "SERVER_ERROR", 500);
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, X, AlertCircle, Loader2, Save, HeartHandshake } from "lucide-react";
+import { User, X, AlertCircle, Loader2, Save, HeartHandshake, Fingerprint, Sparkles } from "lucide-react";
 
 interface EditMemberModalProps {
   isOpen: boolean;
@@ -30,12 +30,35 @@ export function EditMemberModal({
     emergencyContactPhone: member?.emergencyContactPhone || "",
     status: member?.status || "ACTIVE",
     notes: member?.notes || "",
+    doorLockUid: member?.customFields?.doorLockUid || "",
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [detectingUid, setDetectingUid] = useState(false);
+  const [detectMsg, setDetectMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen || !member) return null;
+
+  const handleAutoDetect = async () => {
+    setDetectingUid(true);
+    setDetectMsg(null);
+    try {
+      const res = await fetch("/api/v1/integrations/essl/recent-swipes");
+      const json = await res.json();
+      if (json.success && json.data?.latest) {
+        const latest = json.data.latest;
+        setFormData((prev) => ({ ...prev, doorLockUid: latest.uid }));
+        setDetectMsg(`✨ Detected UID ${latest.uid} from ${latest.deviceName || "Door Lock"}!`);
+      } else {
+        setDetectMsg("No card swipe detected recently. Tap card on door lock now, then click again.");
+      }
+    } catch (e) {
+      setDetectMsg("Failed to connect to door lock feed.");
+    } finally {
+      setDetectingUid(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +81,7 @@ export function EditMemberModal({
           emergencyContactPhone: formData.emergencyContactPhone || null,
           status: formData.status,
           notes: formData.notes || null,
+          doorLockUid: formData.doorLockUid ? formData.doorLockUid.trim() : null,
         }),
       });
 
@@ -238,6 +262,43 @@ export function EditMemberModal({
                 />
               </div>
             </div>
+          </div>
+
+          {/* eSSL Door Lock UID / RFID Card */}
+          <div className="pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700">
+                eSSL Door Lock UID / RFID Card
+              </label>
+              <button
+                type="button"
+                onClick={handleAutoDetect}
+                disabled={detectingUid}
+                className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 transition-colors"
+              >
+                {detectingUid ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3 text-amber-500" />
+                )}
+                <span>⚡ Auto-Detect from Lock</span>
+              </button>
+            </div>
+            <div className="relative">
+              <Fingerprint className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="e.g. 0008432190 or tap card on door lock"
+                value={formData.doorLockUid}
+                onChange={(e) => setFormData({ ...formData, doorLockUid: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 font-mono font-medium focus:bg-white focus:outline-none focus:border-emerald-500 transition-all"
+              />
+            </div>
+            {detectMsg && (
+              <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg px-2.5 py-1 mt-1.5 font-medium">
+                {detectMsg}
+              </p>
+            )}
           </div>
 
           {/* Notes */}

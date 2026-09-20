@@ -4,7 +4,9 @@ import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { CollectPaymentModal } from "@/components/billing/CollectPaymentModal";
 import { ThermalReceiptModal } from "@/components/billing/ThermalReceiptModal";
-import { CreditCard, IndianRupee, FileText, CheckCircle2, Clock, AlertCircle, Printer, ArrowUpRight, TrendingUp } from "lucide-react";
+import { CustomPaymentModal } from "@/components/billing/CustomPaymentModal";
+import { ShiftRegisterModal } from "@/components/billing/ShiftRegisterModal";
+import { CreditCard, IndianRupee, FileText, CheckCircle2, Clock, AlertCircle, Printer, ArrowUpRight, TrendingUp, Zap, Calculator } from "lucide-react";
 import { formatINR, formatDate } from "@/lib/utils";
 
 interface BillingClientProps {
@@ -23,6 +25,8 @@ export default function BillingClient({ user }: BillingClientProps) {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCollectPaymentOpen, setIsCollectPaymentOpen] = useState(false);
+  const [isCustomPaymentOpen, setIsCustomPaymentOpen] = useState(false);
+  const [isShiftRegisterOpen, setIsShiftRegisterOpen] = useState(false);
   const [receiptInvoice, setReceiptInvoice] = useState<any | null>(null);
 
   const fetchInvoices = async () => {
@@ -48,6 +52,21 @@ export default function BillingClient({ user }: BillingClientProps) {
   const totalPaid = invoices.reduce((sum, inv) => sum + Number(inv.paidAmount || 0), 0);
   const totalDue = invoices.reduce((sum, inv) => sum + Number(inv.balanceAmount || 0), 0);
 
+  let cashTally = 0;
+  let upiTally = 0;
+  let cardTally = 0;
+  let onlineTally = 0;
+
+  invoices.forEach((inv) => {
+    inv.payments?.forEach((p: any) => {
+      const amt = Number(p.amount || 0);
+      if (p.mode === "CASH") cashTally += amt;
+      else if (p.mode === "UPI") upiTally += amt;
+      else if (p.mode === "CARD") cardTally += amt;
+      else onlineTally += amt;
+    });
+  });
+
   return (
     <AppLayout user={user}>
       <div className="space-y-6">
@@ -60,13 +79,31 @@ export default function BillingClient({ user }: BillingClientProps) {
             </p>
           </div>
 
-          <button
-            onClick={() => setIsCollectPaymentOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/30 flex items-center gap-2 self-start sm:self-auto transition-all active:scale-95"
-          >
-            <CreditCard className="h-4 w-4" />
-            <span>Collect Fee (POS)</span>
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <button
+              onClick={() => setIsShiftRegisterOpen(true)}
+              className="px-3.5 py-2.5 rounded-xl bg-white border border-slate-200/90 hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs flex items-center gap-2 transition-all active:scale-95"
+            >
+              <Calculator className="h-4 w-4 text-emerald-600" />
+              <span>Shift Register</span>
+            </button>
+
+            <button
+              onClick={() => setIsCustomPaymentOpen(true)}
+              className="px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 text-xs font-semibold shadow-2xs flex items-center gap-2 transition-all active:scale-95"
+            >
+              <Zap className="h-4 w-4 text-indigo-600" />
+              <span>Custom Payment Link</span>
+            </button>
+
+            <button
+              onClick={() => setIsCollectPaymentOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/30 flex items-center gap-2 transition-all active:scale-95"
+            >
+              <CreditCard className="h-4 w-4" />
+              <span>Collect Fee (POS)</span>
+            </button>
+          </div>
         </div>
 
         {/* Financial Highlights */}
@@ -207,6 +244,28 @@ export default function BillingClient({ user }: BillingClientProps) {
         isOpen={isCollectPaymentOpen}
         onClose={() => setIsCollectPaymentOpen(false)}
         onSuccess={fetchInvoices}
+      />
+
+      <CustomPaymentModal
+        isOpen={isCustomPaymentOpen}
+        onClose={() => {
+          setIsCustomPaymentOpen(false);
+          fetchInvoices();
+        }}
+      />
+
+      <ShiftRegisterModal
+        isOpen={isShiftRegisterOpen}
+        onClose={() => setIsShiftRegisterOpen(false)}
+        staffName={user.fullName}
+        gymName={user.tenant?.businessName}
+        systemTotals={{
+          cash: cashTally,
+          upi: upiTally,
+          card: cardTally,
+          online: onlineTally,
+          total: totalPaid,
+        }}
       />
     </AppLayout>
   );

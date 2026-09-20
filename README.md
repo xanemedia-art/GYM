@@ -1,4 +1,4 @@
-# 🏋️ FitZone — Enterprise Gym Management SaaS Platform
+# 🏋️ Be Free Fitness (BFF) — Enterprise Gym Management SaaS Platform
 
 A production-ready, full-stack Gym Management Operating System engineered for fitness centers and multi-branch gym chains in India.
 

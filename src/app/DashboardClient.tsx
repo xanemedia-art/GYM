@@ -4,12 +4,14 @@ import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { BirthdayWidget } from "@/components/dashboard/BirthdayWidget";
+import { UpcomingMonthCard } from "@/components/dashboard/UpcomingMonthCard";
 import { LiveAttendanceFeed } from "@/components/dashboard/LiveAttendanceFeed";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { OnboardMemberModal } from "@/components/members/OnboardMemberModal";
 import { CollectPaymentModal } from "@/components/billing/CollectPaymentModal";
 import { ManualCheckinModal } from "@/components/attendance/ManualCheckinModal";
 import { ShareInviteModal } from "@/components/dashboard/ShareInviteModal";
+import { CustomPaymentModal } from "@/components/billing/CustomPaymentModal";
 import { RefreshCw, Sparkles, Share2 } from "lucide-react";
 
 interface DashboardClientProps {
@@ -29,6 +31,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   const [loading, setLoading] = useState(true);
   const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isCustomPaymentModalOpen, setIsCustomPaymentModalOpen] = useState(false);
   const [isManualPunchModalOpen, setIsManualPunchModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
@@ -99,6 +102,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
           onCollectPayment={() => setIsPaymentModalOpen(true)}
           onManualPunch={() => setIsManualPunchModalOpen(true)}
           onShareInvite={() => setIsInviteModalOpen(true)}
+          onCustomPayment={() => setIsCustomPaymentModalOpen(true)}
         />
 
         {/* Real-time Metric Cards */}
@@ -125,6 +129,9 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             <BirthdayWidget
               birthdays={stats?.birthdays || { today: [], tomorrow: [] }}
             />
+            <UpcomingMonthCard
+              upcomingMonth={stats?.upcomingMonth}
+            />
           </div>
         </div>
       </div>
@@ -140,6 +147,11 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         onSuccess={fetchStats}
+      />
+
+      <CustomPaymentModal
+        isOpen={isCustomPaymentModalOpen}
+        onClose={() => setIsCustomPaymentModalOpen(false)}
       />
 
       <ManualCheckinModal

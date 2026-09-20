@@ -7,15 +7,18 @@ export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get("x-razorpay-signature") || "";
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || "default_webhook_secret_for_dev";
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
-    // Verify signature if secret is provided in environment or production
-    if (process.env.NODE_ENV === "production" || process.env.RAZORPAY_WEBHOOK_SECRET) {
-      const isValid = verifyRazorpayWebhookSignature(rawBody, signature, webhookSecret);
-      if (!isValid) {
-        console.warn("Razorpay webhook signature verification failed");
-        return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-      }
+    if (process.env.NODE_ENV === "production" && !webhookSecret) {
+      console.error("FATAL: RAZORPAY_WEBHOOK_SECRET is not configured in production");
+      return NextResponse.json({ error: "Webhook configuration error" }, { status: 500 });
+    }
+
+    const secretToVerify = webhookSecret || "default_webhook_secret_for_dev";
+    const isValid = verifyRazorpayWebhookSignature(rawBody, signature, secretToVerify);
+    if (!isValid) {
+      console.warn("Razorpay webhook signature verification failed");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
     const eventData = JSON.parse(rawBody);

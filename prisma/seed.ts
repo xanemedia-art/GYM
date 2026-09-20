@@ -11,12 +11,12 @@ async function main() {
     where: { slug: "fitzone-delhi" },
     update: {},
     create: {
-      slug: "fitzone-delhi",
-      businessName: "FitZone Elite Club",
-      legalName: "FitZone Fitness Private Limited",
+      slug: "be-free-fitness-delhi",
+      businessName: "Be Free Fitness",
+      legalName: "Be Free Fitness Private Limited",
       gstin: "07AAAAF1234F1Z5",
       phone: "+919876543210",
-      email: "contact@fitzone.in",
+      email: "contact@befreefitness.in",
       address: {
         street: "Plot 42, Outer Ring Road",
         area: "Connaught Place",

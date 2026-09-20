@@ -40,7 +40,7 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<E
           Authorization: `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          from: process.env.EMAIL_FROM || "FitZone Elite <billing@fitzone-elite.in>",
+          from: process.env.EMAIL_FROM || "Be Free Fitness <billing@befreefitness.in>",
           to,
           subject,
           html: htmlContent,

@@ -56,6 +56,57 @@ body {
 
 /* Selection color */
 ::selection {
-  background-color: #a7f3d0;
-  color: #065f46;
+  background-color: #a3e635;
+  color: #05080c;
+}
+
+/* Liquid Glass & Luxury Athletic Styling */
+.liquid-glass {
+  background: rgba(13, 19, 28, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+}
+
+.liquid-glass-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.liquid-glass-hover:hover {
+  background: rgba(18, 25, 38, 0.85);
+  border-color: rgba(163, 230, 53, 0.35);
+  box-shadow: 0 12px 40px -10px rgba(163, 230, 53, 0.2);
+  transform: translateY(-2px);
+}
+
+.liquid-glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+.lime-glow {
+  box-shadow: 0 0 25px -4px rgba(163, 230, 53, 0.45);
+}
+
+.lime-glow-subtle {
+  box-shadow: 0 0 35px -10px rgba(163, 230, 53, 0.25);
+}
+
+.lime-glow-text {
+  text-shadow: 0 0 24px rgba(163, 230, 53, 0.6);
+}
+
+.emerald-glow {
+  box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.4);
+}
+
+/* Custom cursor management for desktop devices */
+@media (pointer: fine) {
+  body.custom-cursor-enabled,
+  body.custom-cursor-enabled * {
+    cursor: none !important;
+  }
 }

@@ -204,3 +204,52 @@ export async function POST(req: NextRequest) {
     return apiError("Failed to create calendar event", "SERVER_ERROR", 500);
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getSession();
+    if (!session || !session.tenantId) {
+      return apiError("Unauthorized", "UNAUTHORIZED", 401);
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return apiError("Event ID is required", "BAD_REQUEST", 400);
+    }
+
+    // Birthdays and expirations are virtual computed events and cannot be deleted here
+    if (id.startsWith("bday-") || id.startsWith("exp-")) {
+      return apiError("System-computed member events cannot be deleted directly", "BAD_REQUEST", 400);
+    }
+
+    const existing = await prisma.calendarEvent.findFirst({
+      where: { id, tenantId: session.tenantId },
+    });
+
+    if (!existing) {
+      return apiError("Event not found", "NOT_FOUND", 404);
+    }
+
+    await prisma.calendarEvent.delete({
+      where: { id },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        tenantId: session.tenantId,
+        userId: session.id,
+        action: "CALENDAR_EVENT_DELETED",
+        entityType: "CALENDAR_EVENT",
+        entityId: id,
+        oldValues: { title: existing.title },
+      },
+    });
+
+    return apiSuccess({ deleted: true });
+  } catch (error: any) {
+    console.error("Calendar DELETE error:", error);
+    return apiError("Failed to delete calendar event", "SERVER_ERROR", 500);
+  }
+}

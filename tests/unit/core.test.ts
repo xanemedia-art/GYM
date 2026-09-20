@@ -262,3 +262,86 @@ describe("8. Cryptographic Client Self-Registration Invite Tokens", () => {
   });
 });
 
+describe("9. NPCI Compliant Dynamic UPI Payment URI & QR Generation", () => {
+  test("Constructs valid static UPI VPA URI for branch standees", async () => {
+    const { buildUpiUri } = await import("@/lib/upi");
+    const uri = buildUpiUri({
+      pa: "befreefitness@icici",
+      pn: "Be Free Fitness",
+    });
+
+    assert.ok(uri.startsWith("upi://pay?"));
+    assert.ok(uri.includes("pa=befreefitness%40icici"));
+    assert.ok(uri.includes("pn=Be%20Free%20Fitness"));
+    assert.ok(uri.includes("cu=INR"));
+    assert.ok(!uri.includes("&am="));
+  });
+
+  test("Constructs dynamic UPI URI with precise amount and transaction note", async () => {
+    const { buildUpiUri } = await import("@/lib/upi");
+    const uri = buildUpiUri({
+      pa: "befreefitness@icici",
+      pn: "Be Free Fitness Indiranagar",
+      am: 4999,
+      tn: "INV/26-27/0104",
+    });
+
+    assert.ok(uri.includes("pa=befreefitness%40icici"));
+    assert.ok(uri.includes("am=4999.00"));
+    assert.ok(uri.includes("tn=INV%2F26-27%2F0104"));
+  });
+
+  test("Generates valid base64 PNG data URL for UPI QR", async () => {
+    const { buildUpiUri, generateQrDataUrl } = await import("@/lib/upi");
+    const uri = buildUpiUri({
+      pa: "befreefitness@icici",
+      pn: "Be Free Fitness",
+      am: 1500,
+    });
+    const qrDataUrl = await generateQrDataUrl(uri, 250);
+
+    assert.ok(typeof qrDataUrl === "string");
+    assert.ok(qrDataUrl.startsWith("data:image/png;base64,"));
+  });
+});
+
+describe("10. High-Speed Kiosk Cryptographic Deduplication", () => {
+  test("Generates identical dedupHash within 5-minute time window", () => {
+    const tenantId = "tenant-befree-001";
+    const memberId = "member-rohan-001";
+    const windowMinutes = 5;
+    const windowMs = windowMinutes * 60 * 1000;
+
+    const time1 = new Date("2026-09-18T10:01:15Z").getTime();
+    const time2 = new Date("2026-09-18T10:04:45Z").getTime();
+
+    const rounded1 = Math.floor(time1 / windowMs) * windowMs;
+    const rounded2 = Math.floor(time2 / windowMs) * windowMs;
+
+    const hash1 = crypto.createHash("sha256").update(`${tenantId}:${memberId}:CHECK_IN:${rounded1}`).digest("hex");
+    const hash2 = crypto.createHash("sha256").update(`${tenantId}:${memberId}:CHECK_IN:${rounded2}`).digest("hex");
+
+    assert.strictEqual(rounded1, rounded2);
+    assert.strictEqual(hash1, hash2);
+  });
+
+  test("Generates distinct dedupHash across different 5-minute time windows", () => {
+    const tenantId = "tenant-befree-001";
+    const memberId = "member-rohan-001";
+    const windowMinutes = 5;
+    const windowMs = windowMinutes * 60 * 1000;
+
+    const time1 = new Date("2026-09-18T10:01:15Z").getTime();
+    const time2 = new Date("2026-09-18T10:06:15Z").getTime();
+
+    const rounded1 = Math.floor(time1 / windowMs) * windowMs;
+    const rounded2 = Math.floor(time2 / windowMs) * windowMs;
+
+    const hash1 = crypto.createHash("sha256").update(`${tenantId}:${memberId}:CHECK_IN:${rounded1}`).digest("hex");
+    const hash2 = crypto.createHash("sha256").update(`${tenantId}:${memberId}:CHECK_IN:${rounded2}`).digest("hex");
+
+    assert.notStrictEqual(rounded1, rounded2);
+    assert.notStrictEqual(hash1, hash2);
+  });
+});
+

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Dumbbell, Lock, Mail, ArrowRight, AlertCircle, ShieldCheck } from "lucide-react";
+import { Lock, Mail, ArrowRight, AlertCircle, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function LoginPage() {
         throw new Error(data.error?.message || "Invalid login credentials");
       }
 
-      router.push("/");
+      router.push("/portal");
       router.refresh();
     } catch (err: any) {
       setError(err.message);
@@ -52,10 +53,17 @@ export default function LoginPage() {
         {/* Brand Card */}
         <div className="rounded-2xl bg-white border border-slate-200/90 shadow-xl backdrop-blur-xl p-8">
           <div className="flex flex-col items-center text-center mb-8">
-            <div className="h-12 w-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black shadow-lg shadow-emerald-600/25 mb-3">
-              <Dumbbell className="h-6 w-6" />
+            <div className="h-16 w-auto mb-2 flex items-center justify-center">
+              <Image
+                src="/bff-logo.png"
+                alt="Be Free Fitness"
+                width={200}
+                height={70}
+                priority
+                className="h-14 w-auto object-contain"
+              />
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">FitZone Management OS</h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">Be Free Fitness Management OS</h1>
             <p className="text-xs text-slate-500 mt-1">Sign in to your fitness center console</p>
           </div>
 

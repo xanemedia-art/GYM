@@ -3,6 +3,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/lib/api-response";
+import { recordDoorLockSwipe } from "@/lib/door-lock";
 
 const punchItemSchema = z.object({
   deviceEnrollmentId: z.number().int().positive(),
@@ -12,7 +13,7 @@ const punchItemSchema = z.object({
 });
 
 const batchPunchesSchema = z.object({
-  punches: z.array(punchItemSchema).min(1),
+  punches: z.array(punchItemSchema).default([]),
 });
 
 export async function POST(req: NextRequest) {
@@ -34,9 +35,15 @@ export async function POST(req: NextRequest) {
       return apiError("Device not registered", "DEVICE_NOT_FOUND", 404);
     }
 
-    // Verify API Key (using SHA256 comparison)
+    // Verify API Key using constant-time comparison to prevent timing attacks
     const keyHash = crypto.createHash("sha256").update(apiKey).digest("hex");
-    if (device.apiKeyHash !== keyHash) {
+    const keyHashBuf = Buffer.from(keyHash, "hex");
+    const devKeyHashBuf = Buffer.from(device.apiKeyHash, "hex");
+
+    if (
+      keyHashBuf.length !== devKeyHashBuf.length ||
+      !crypto.timingSafeEqual(keyHashBuf, devKeyHashBuf)
+    ) {
       return apiError("Invalid device API key", "UNAUTHORIZED", 401);
     }
 
@@ -53,7 +60,10 @@ export async function POST(req: NextRequest) {
     let unmappedCount = 0;
 
     for (const punch of punches) {
-      // Find member mapped to this enrollment ID on this device
+      const enrollmentStr = String(punch.deviceEnrollmentId);
+
+      // 1. Check direct DeviceUser mapping
+      let memberId: string | null = null;
       const mapping = await prisma.deviceUser.findUnique({
         where: {
           uq_device_enrollment: {
@@ -61,11 +71,42 @@ export async function POST(req: NextRequest) {
             deviceEnrollmentId: punch.deviceEnrollmentId,
           },
         },
-        include: { member: true },
+        select: { memberId: true },
       });
 
-      if (!mapping || !mapping.member) {
+      if (mapping) {
+        memberId = mapping.memberId;
+      } else {
+        // 2. Fallback: Search member by memberCode or customFields doorLockUid / cardNumber
+        const matchedMember = await prisma.member.findFirst({
+          where: {
+            tenantId: device.tenantId,
+            isDeleted: false,
+            OR: [
+              { memberCode: { equals: enrollmentStr, mode: "insensitive" } },
+              { memberCode: { equals: `M-${enrollmentStr}`, mode: "insensitive" } },
+              { customFields: { path: ["doorLockUid"], equals: enrollmentStr } },
+              { customFields: { path: ["cardNumber"], equals: enrollmentStr } },
+            ],
+          },
+          select: { id: true },
+        });
+
+        if (matchedMember) {
+          memberId = matchedMember.id;
+        }
+      }
+
+      if (!memberId) {
         unmappedCount++;
+        // Capture unmapped swipe so gym owner can connect it to a member with 1 click
+        recordDoorLockSwipe({
+          uid: enrollmentStr,
+          deviceName: device.deviceName,
+          deviceId: device.id,
+          tenantId: device.tenantId,
+          rawTime: punch.punchTime,
+        });
         continue;
       }
 
@@ -73,14 +114,14 @@ export async function POST(req: NextRequest) {
       const bucket = Math.floor(punchDate.getTime() / (5 * 60 * 1000));
       const dedupHash = crypto
         .createHash("sha256")
-        .update(`${device.tenantId}:${mapping.memberId}:${bucket}`)
+        .update(`${device.tenantId}:${memberId}:${bucket}`)
         .digest("hex");
 
       try {
         await prisma.attendanceRecord.create({
           data: {
             tenantId: device.tenantId,
-            memberId: mapping.memberId,
+            memberId: memberId,
             deviceId: device.id,
             punchTime: punchDate,
             punchType: punch.punchType,

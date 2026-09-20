@@ -71,7 +71,7 @@ export function ShareInviteModal({ isOpen, onClose, gymName }: ShareInviteModalP
   const cleanPhone = clientPhone.replace(/\D/g, "").slice(-10);
   const whatsappText = encodeURIComponent(
     `Hi${clientName ? ` ${clientName}` : ""}! Here is your private link to register with ${
-      gymName || "FitZone"
+      gymName || "Be Free Fitness"
     } and choose your membership package: ${generatedUrl} (Link valid for ${expiresInHours} hours). Welcome aboard!`
   );
   const whatsappUrl = cleanPhone

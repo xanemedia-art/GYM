@@ -9,15 +9,15 @@ async function main() {
 
   // 1. Bengaluru Branch
   const blrTenant = await prisma.tenant.upsert({
-    where: { slug: "fitzone-bengaluru" },
+    where: { slug: "be-free-fitness-bengaluru" },
     update: {},
     create: {
-      slug: "fitzone-bengaluru",
-      businessName: "FitZone Prime (Indiranagar)",
-      legalName: "FitZone Fitness South Private Limited",
+      slug: "be-free-fitness-bengaluru",
+      businessName: "Be Free Fitness Prime (Indiranagar)",
+      legalName: "Be Free Fitness South Private Limited",
       gstin: "29AAAAF1234F1Z3",
       phone: "+919880011223",
-      email: "bengaluru@fitzone.in",
+      email: "bengaluru@befreefitness.in",
       address: {
         street: "100 Feet Road, HAL 2nd Stage",
         area: "Indiranagar",
@@ -35,7 +35,7 @@ async function main() {
     update: {},
     create: {
       tenantId: blrTenant.id,
-      invoicePrefix: "FZ-BLR",
+      invoicePrefix: "BFF-BLR",
       enableGst: true,
       gstRatePercentage: 18.0,
       attendanceDuplicateWindowMin: 5,
@@ -47,15 +47,15 @@ async function main() {
 
   // 2. Mumbai Branch
   const bomTenant = await prisma.tenant.upsert({
-    where: { slug: "fitzone-mumbai" },
+    where: { slug: "be-free-fitness-mumbai" },
     update: {},
     create: {
-      slug: "fitzone-mumbai",
-      businessName: "FitZone Signature (Bandra)",
-      legalName: "FitZone Fitness West Private Limited",
+      slug: "be-free-fitness-mumbai",
+      businessName: "Be Free Fitness Signature (Bandra)",
+      legalName: "Be Free Fitness West Private Limited",
       gstin: "27AAAAF1234F1Z8",
       phone: "+919820055443",
-      email: "mumbai@fitzone.in",
+      email: "mumbai@befreefitness.in",
       address: {
         street: "Hill Road, Near Bandra Station",
         area: "Bandra West",
@@ -73,7 +73,7 @@ async function main() {
     update: {},
     create: {
       tenantId: bomTenant.id,
-      invoicePrefix: "FZ-BOM",
+      invoicePrefix: "BFF-BOM",
       enableGst: true,
       gstRatePercentage: 18.0,
       attendanceDuplicateWindowMin: 5,

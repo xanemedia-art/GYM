@@ -1,0 +1,574 @@
+{
+  "general": {
+    "brandName": "Be Free Fitness",
+    "tagline": "North India's Premier Athletic Luxury Gym Chain",
+    "phone": "+91 98160 12001",
+    "whatsapp": "919816012001",
+    "email": "contact@befreefitness.in",
+    "headquarters": "Central Office, Dhalpur Ground Road, Kullu, HP — 175101",
+    "socialLinks": {
+      "instagram": "https://instagram.com/befreefitness",
+      "facebook": "https://facebook.com/befreefitness",
+      "youtube": "https://youtube.com/@befreefitness"
+    }
+  },
+  "sections": {
+    "hero": {
+      "badge": "BE FREE FITNESS NETWORK • 6 Branches in Kullu & Dehradun",
+      "headline": "UNLEASH YOUR",
+      "headlineAccent": "FREEDOM.",
+      "subtitle": "North India's premier athletic luxury gym chain. High-caliber Olympic strength lines, automated eSSL smart biometric access, Finnish saunas, and elite mountain-bred coaching.",
+      "heroImage": "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=1470&auto=format&fit=crop",
+      "stats": [
+        {
+          "value": "6",
+          "label": "Elite Locations",
+          "sub": "Kullu Valley & Dehradun"
+        },
+        {
+          "value": "12,000+",
+          "label": "Members Transformed",
+          "sub": "Proven body recomposition"
+        },
+        {
+          "value": "35,000+",
+          "label": "Sq.Ft Training Area",
+          "sub": "Heavy strength & cardio"
+        },
+        {
+          "value": "eSSL 100%",
+          "label": "Automated Access",
+          "sub": "Biometric turnstiles"
+        }
+      ]
+    },
+    "about": {
+      "badge": "THE BE FREE FITNESS STORY",
+      "title": "FORGED IN THE HIMALAYAS. REFINING ATHLETIC LUXURY.",
+      "subtitle": "Born in Kullu Valley in 2019, Be Free Fitness was founded with a singular conviction: strength training should feel liberating, uncompromising, and deeply empowering.",
+      "story": "From our first flagship at Dhalpur Ground to 6 state-of-the-art facilities across Himachal Pradesh and Uttarakhand, we have built the standard for athletic training in the North.",
+      "image": "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=1470&auto=format&fit=crop"
+    },
+    "franchise": {
+      "badge": "PROVEN ROI • TURNKEY GYM SYSTEMS",
+      "title": "PARTNER WITH NORTH INDIA'S FASTEST GROWING FITNESS CHAIN",
+      "subtitle": "Join a brand backed by automated eSSL member access, high member retention, centralized member management, and high-margin strength centers.",
+      "image": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1470&auto=format&fit=crop",
+      "capex": "₹45L – ₹65L",
+      "roiMonths": "18 – 24 Mos",
+      "sqftRequired": "4,500 – 7,500",
+      "paybackPeriod": "3.2x 5-Yr IRR"
+    }
+  },
+  "branches": [
+    {
+      "slug": "dhalpur-kullu",
+      "name": "Be Free Fitness Dhalpur",
+      "shortName": "BFF Dhalpur",
+      "city": "Kullu",
+      "state": "Himachal Pradesh",
+      "region": "Kullu Valley",
+      "tagline": "The Valley's Flagship Athletic Center",
+      "address": "Opposite Dhalpur Ground, Near Football Stadium, Dhalpur",
+      "landmark": "Near Football Stadium",
+      "pincode": "175101",
+      "phone": "+91 98160 12001",
+      "whatsapp": "919816012001",
+      "email": "dhalpur@befreefitness.in",
+      "areaSqFt": 6500,
+      "establishedYear": 2019,
+      "timings": {
+        "weekdays": "5:30 AM – 10:00 PM",
+        "saturday": "5:30 AM – 9:30 PM",
+        "sunday": "6:00 AM – 1:00 PM"
+      },
+      "amenities": [
+        {
+          "id": "olympic",
+          "name": "Olympic Lifting Deck",
+          "icon": "dumbbell",
+          "description": "Eleiko barbells, calibrated steel plates, and drop platforms"
+        },
+        {
+          "id": "steam",
+          "name": "Finnish Steam & Sauna",
+          "icon": "flame",
+          "description": "Post-workout thermotherapy and muscle recovery suites"
+        },
+        {
+          "id": "essl",
+          "name": "eSSL Biometric Smart Access",
+          "icon": "fingerprint",
+          "description": "Automated RFID & biometric turnstile door entry"
+        },
+        {
+          "id": "lockers",
+          "name": "Luxury Locker Rooms",
+          "icon": "lock",
+          "description": "Individual keyless lockers, rain showers, and vanity areas"
+        },
+        {
+          "id": "cafe",
+          "name": "Be Free Protein Bar",
+          "icon": "coffee",
+          "description": "Fresh whey shakes, cold brew, and clean macro meals"
+        },
+        {
+          "id": "parking",
+          "name": "Private Valet & Parking",
+          "icon": "car",
+          "description": "Ample vehicle parking directly facing Dhalpur Ground"
+        }
+      ],
+      "equipmentHighlights": [
+        "Heavy Dumbbell Rack up to 60 kg",
+        "Power Lift Multi-Station Cable Columns",
+        "Olympic Squat & Bench Competition Cages",
+        "Assault Air Bikes & Concept2 Rowers",
+        "TrueForm Curved Non-Motorized Treadmills"
+      ],
+      "headTrainer": {
+        "name": "Vikram Thakur",
+        "title": "Head Strength Coach & Master Trainer",
+        "experience": "9+ Years Experience",
+        "specialties": [
+          "Powerlifting",
+          "Hypertrophy",
+          "Athlete Conditioning"
+        ],
+        "bio": "Former state powerlifting champion, specializing in biomechanical barbell optimization and rapid body recomposition."
+      },
+      "features": [
+        "Valley view panoramic cardio deck",
+        "Dedicated women's personal training hour",
+        "Daily sanitized locker and shower facilities",
+        "Certified clinical sports nutritionists on staff"
+      ],
+      "coordinates": {
+        "lat": 31.9579,
+        "lng": 77.1095
+      },
+      "image": "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?q=80&w=1471&auto=format&fit=crop",
+      "gallery": [
+        "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop"
+      ]
+    },
+    {
+      "slug": "gandhinagar-kullu",
+      "name": "Be Free Fitness Gandhinagar",
+      "shortName": "BFF Gandhinagar",
+      "city": "Kullu",
+      "state": "Himachal Pradesh",
+      "region": "Kullu Valley",
+      "tagline": "Hypertrophy Lab & Strength Hub",
+      "address": "NH 3, Opposite Old Bus Stand, Gandhinagar",
+      "landmark": "Opposite Old Bus Stand",
+      "pincode": "175101",
+      "phone": "+91 98160 12002",
+      "whatsapp": "919816012002",
+      "email": "gandhinagar@befreefitness.in",
+      "areaSqFt": 4800,
+      "establishedYear": 2021,
+      "timings": {
+        "weekdays": "5:30 AM – 10:00 PM",
+        "saturday": "6:00 AM – 9:00 PM",
+        "sunday": "7:00 AM – 12:00 PM"
+      },
+      "amenities": [
+        {
+          "id": "turf",
+          "name": "High-Intensity Turf",
+          "icon": "activity",
+          "description": "30-meter sled track for functional sprint & prowler pushes"
+        },
+        {
+          "id": "pin",
+          "name": "Pin-Loaded Precision Fleet",
+          "icon": "disc",
+          "description": "Biomechanically tuned isolation line for safe muscle growth"
+        },
+        {
+          "id": "essl",
+          "name": "Smart Turnstile System",
+          "icon": "fingerprint",
+          "description": "Instant RFID tag & biometric attendance logging"
+        },
+        {
+          "id": "shower",
+          "name": "Hot Rain Showers",
+          "icon": "droplets",
+          "description": "High-pressure thermal showers with grooming stations"
+        },
+        {
+          "id": "wifi",
+          "name": "High-Speed Mesh Wi-Fi",
+          "icon": "wifi",
+          "description": "Seamless streaming for your personal workout playlists"
+        }
+      ],
+      "equipmentHighlights": [
+        "Hammer Strength ISO-Lateral Chest & Lat Machines",
+        "Dual Adjustable Functional Pulleys",
+        "Glute Ham Developer & Pendulum Squat",
+        "Hex Dumbbell Set 2.5 kg to 50 kg"
+      ],
+      "headTrainer": {
+        "name": "Rohit Sharma",
+        "title": "Senior Functional & Hypertrophy Coach",
+        "experience": "7+ Years Experience",
+        "specialties": [
+          "Hypertrophy",
+          "Mobility Rehab",
+          "Fat Loss"
+        ],
+        "bio": "Certified ACE Personal Trainer with a focus on sustainable fat loss, postural alignment, and high-volume hypertrophy."
+      },
+      "features": [
+        "Direct highway accessibility with quick drop-off",
+        "Dedicated core & abdominal training studio",
+        "Air exchange purification system"
+      ],
+      "coordinates": {
+        "lat": 31.9545,
+        "lng": 77.108
+      },
+      "image": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1593079831268-3381b0db4a77?auto=format&fit=crop&w=800&q=80"
+      ]
+    },
+    {
+      "slug": "akhara-bazar-kullu",
+      "name": "Be Free Fitness Akhara Bazar",
+      "shortName": "Akhara Iron Den",
+      "city": "Kullu",
+      "state": "Himachal Pradesh",
+      "region": "Kullu Valley",
+      "tagline": "The Heavy Iron & Calisthenics Den",
+      "address": "Central Market Road, Near Ramshila Chowk, Akhara Bazar",
+      "landmark": "Near Ramshila Chowk",
+      "pincode": "175101",
+      "phone": "+91 98160 12003",
+      "whatsapp": "919816012003",
+      "email": "akharabazar@befreefitness.in",
+      "areaSqFt": 5200,
+      "establishedYear": 2022,
+      "timings": {
+        "weekdays": "5:30 AM – 10:00 PM",
+        "saturday": "6:00 AM – 9:30 PM",
+        "sunday": "6:30 AM – 1:00 PM"
+      },
+      "amenities": [
+        {
+          "id": "heavy",
+          "name": "Heavy Dumbbells to 65 kg",
+          "icon": "shield",
+          "description": "Engineered for elite powerlifters and heavy pressers"
+        },
+        {
+          "id": "rig",
+          "name": "CrossFit Movement Rig",
+          "icon": "grid",
+          "description": "Monkey bars, gymnastic rings, and wall-ball targets"
+        },
+        {
+          "id": "essl",
+          "name": "Biometric Door Lock",
+          "icon": "fingerprint",
+          "description": "Automated instant check-in connected to mobile app"
+        },
+        {
+          "id": "steam",
+          "name": "Infrared Recovery Pod",
+          "icon": "flame",
+          "description": "Deep tissue soothing and accelerated lactic acid flush"
+        }
+      ],
+      "equipmentHighlights": [
+        "Incline, Flat, and Decline Heavy Duty Benches",
+        "Standing Lateral Raise & Donkey Calf Machine",
+        "Hack Squat 45-Degree High Load Platform",
+        "Kettlebell Arsenal (8 kg to 36 kg)"
+      ],
+      "headTrainer": {
+        "name": "Amit Bodh",
+        "title": "Strength & Conditioning Specialist",
+        "experience": "8+ Years Experience",
+        "specialties": [
+          "Heavy Compound Lifts",
+          "Cross-Training",
+          "HIIT"
+        ],
+        "bio": "Passionate strength athlete dedicated to building rugged functional power and unyielding mental endurance."
+      },
+      "features": [
+        "Vibrant high-energy hip-hop & bass sound system",
+        "Central downtown location accessible on foot",
+        "Tailored women's strength coaching batches"
+      ],
+      "coordinates": {
+        "lat": 31.968,
+        "lng": 77.118
+      },
+      "image": "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?auto=format&fit=crop&w=800&q=80"
+      ]
+    },
+    {
+      "slug": "bajaura-kullu",
+      "name": "Be Free Fitness Bajaura",
+      "shortName": "Bajaura Valley",
+      "city": "Kullu",
+      "state": "Himachal Pradesh",
+      "region": "Kullu Valley",
+      "tagline": "Panoramic Himalayan Fitness & Recovery",
+      "address": "National Highway 21, Near Hatkoti Bridge, Bajaura",
+      "landmark": "Near Hatkoti Bridge",
+      "pincode": "175125",
+      "phone": "+91 98160 12004",
+      "whatsapp": "919816012004",
+      "email": "bajaura@befreefitness.in",
+      "areaSqFt": 5000,
+      "establishedYear": 2023,
+      "timings": {
+        "weekdays": "5:30 AM – 9:30 PM",
+        "saturday": "6:00 AM – 9:00 PM",
+        "sunday": "7:00 AM – 12:00 PM"
+      },
+      "amenities": [
+        {
+          "id": "panorama",
+          "name": "Himalayan View Cardio",
+          "icon": "eye",
+          "description": "Treadmills and stairmasters facing the pine-covered mountains"
+        },
+        {
+          "id": "calisthenics",
+          "name": "Calisthenics Jungle",
+          "icon": "activity",
+          "description": "Bodyweight bars, dip stations, and climbing ropes"
+        },
+        {
+          "id": "essl",
+          "name": "eSSL Door Automation",
+          "icon": "fingerprint",
+          "description": "Smart access control with instant member profile sync"
+        },
+        {
+          "id": "juice",
+          "name": "Fresh Juice & Hydration",
+          "icon": "coffee",
+          "description": "Local Himalayan apple detox juices and electrolytes"
+        }
+      ],
+      "equipmentHighlights": [
+        "Matrix S-Drive Performance Trainers",
+        "Belt Squat Machine for Spinal Decompression",
+        "Heavy Bag & Kickboxing Striking Zone",
+        "Full Dumbbell & Barbell Suites"
+      ],
+      "headTrainer": {
+        "name": "Karan Rana",
+        "title": "Endurance & Calisthenics Master Coach",
+        "experience": "6+ Years Experience",
+        "specialties": [
+          "Mountain Trek Conditioning",
+          "Calisthenics",
+          "Mobility"
+        ],
+        "bio": "Trail runner and calisthenics practitioner coaching athletes to peak cardiovascular stamina and functional flexibility."
+      },
+      "features": [
+        "Spacious open-air cross-ventilation system",
+        "Ideal training gateway for local valley athletes and travelers",
+        "Complimentary locker storage and shower stalls"
+      ],
+      "coordinates": {
+        "lat": 31.8512,
+        "lng": 77.1601
+      },
+      "image": "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80"
+      ]
+    },
+    {
+      "slug": "sudhowala-dehradun",
+      "name": "Be Free Fitness Sudhowala",
+      "shortName": "Sudhowala Campus",
+      "city": "Dehradun",
+      "state": "Uttarakhand",
+      "region": "Dehradun",
+      "tagline": "7,200 Sq.Ft Mega Fitness Campus",
+      "address": "Chakrata Road, Opposite University Gate, Sudhowala",
+      "landmark": "Opposite University Gate, Chakrata Road",
+      "pincode": "248007",
+      "phone": "+91 98970 88001",
+      "whatsapp": "919897088001",
+      "email": "sudhowala@befreefitness.in",
+      "areaSqFt": 7200,
+      "establishedYear": 2024,
+      "timings": {
+        "weekdays": "5:30 AM – 10:30 PM",
+        "saturday": "5:30 AM – 10:00 PM",
+        "sunday": "6:00 AM – 2:00 PM"
+      },
+      "amenities": [
+        {
+          "id": "mega",
+          "name": "Mega Double-Story Floor",
+          "icon": "maximize",
+          "description": "Upper level cardio & turf, ground level heavy strength iron"
+        },
+        {
+          "id": "biomech",
+          "name": "Biomechanical Plate Fleet",
+          "icon": "disc",
+          "description": "Precision converging & diverging vector plate machines"
+        },
+        {
+          "id": "essl",
+          "name": "eSSL Optical Turnstiles",
+          "icon": "fingerprint",
+          "description": "Ultra-fast RFID & face/fingerprint entry gates"
+        },
+        {
+          "id": "lounge",
+          "name": "Athlete Lounge & Wifi",
+          "icon": "coffee",
+          "description": "Co-working friendly space with high-speed fiber internet"
+        },
+        {
+          "id": "steam",
+          "name": "Dual Steam Suites",
+          "icon": "flame",
+          "description": "Separate men & women steam rooms with eucalyptus aromatherapy"
+        }
+      ],
+      "equipmentHighlights": [
+        "Prime Fitness Variable Resistance Benches",
+        "Nautilus Glute Drive & Hip Thrust Machines",
+        "Booty Builder Official Hip Thrust System",
+        "Concept2 SkiErgs & Rogue Echo Bikes",
+        "Dumbbell Array up to 55 kg"
+      ],
+      "headTrainer": {
+        "name": "Siddharth Rawat",
+        "title": "Director of Fitness & Head Coach",
+        "experience": "10+ Years Experience",
+        "specialties": [
+          "Contest Prep",
+          "Advanced Kinesiology",
+          "Power-Building"
+        ],
+        "bio": "National fitness coach and sports nutritionist who has mentored hundreds of university students and competitive athletes."
+      },
+      "features": [
+        "Student & faculty priority membership discounts",
+        "Dedicated HIIT bootcamp classes daily",
+        "Clean air filtration and climate-controlled floors"
+      ],
+      "coordinates": {
+        "lat": 30.3478,
+        "lng": 77.925
+      },
+      "image": "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=800&q=80"
+      ]
+    },
+    {
+      "slug": "prem-nagar-dehradun",
+      "name": "Be Free Fitness Prem Nagar",
+      "shortName": "Prem Nagar Cantonment",
+      "city": "Dehradun",
+      "state": "Uttarakhand",
+      "region": "Dehradun",
+      "tagline": "Cantonment Elite Power & Bodybuilding",
+      "address": "Main Cantonment Market, Prem Nagar Chowk, Dehradun",
+      "landmark": "Prem Nagar Chowk",
+      "pincode": "248007",
+      "phone": "+91 98970 88002",
+      "whatsapp": "919897088002",
+      "email": "premnagar@befreefitness.in",
+      "areaSqFt": 6000,
+      "establishedYear": 2025,
+      "timings": {
+        "weekdays": "5:30 AM – 10:00 PM",
+        "saturday": "5:30 AM – 9:30 PM",
+        "sunday": "6:30 AM – 1:00 PM"
+      },
+      "amenities": [
+        {
+          "id": "power",
+          "name": "Powerlifting & Grip Den",
+          "icon": "shield",
+          "description": "Deadlift dead-stop platforms, chalk stations, and axle bars"
+        },
+        {
+          "id": "steam",
+          "name": "Aromatherapy Steam Room",
+          "icon": "flame",
+          "description": "Deep muscle relief and detox sessions"
+        },
+        {
+          "id": "essl",
+          "name": "eSSL Automated Access",
+          "icon": "fingerprint",
+          "description": "Zero-wait RFID card and biometric door lock entry"
+        },
+        {
+          "id": "cafe",
+          "name": "Supplements & Shake Bar",
+          "icon": "coffee",
+          "description": "Official authorized retailer of verified imported whey & EAAs"
+        },
+        {
+          "id": "parking",
+          "name": "Dedicated Basement Parking",
+          "icon": "car",
+          "description": "Secure, weather-protected parking for two and four-wheelers"
+        }
+      ],
+      "equipmentHighlights": [
+        "Arsenal Strength Vertical Leg Press",
+        "Dual Lat Pulldown & Seated Cable Row",
+        "Glute Kickback Machine & Sissy Squat Bench",
+        "Dumbbell Rack 2.5 kg to 60 kg"
+      ],
+      "headTrainer": {
+        "name": "Deepak Negi",
+        "title": "Head Bodybuilding & Strength Coach",
+        "experience": "8+ Years Experience",
+        "specialties": [
+          "Classic Physique",
+          "Injury Prevention",
+          "Strength Cycles"
+        ],
+        "bio": "Specialist in progressive overload modeling, body transformation, and military physical endurance training."
+      },
+      "features": [
+        "Military & defense personnel special discount tier",
+        "Dedicated posing & lighting practice room",
+        "Top-grade rubber vibration absorption flooring"
+      ],
+      "coordinates": {
+        "lat": 30.3341,
+        "lng": 77.962
+      },
+      "image": "https://images.unsplash.com/photo-1593079831268-3381b0db4a77?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=800&q=80"
+      ]
+    }
+  ]
+}

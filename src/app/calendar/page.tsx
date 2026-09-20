@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -15,13 +16,15 @@ export default async function CalendarPage() {
   });
 
   return (
-    <CalendarClient
-      user={{
-        fullName: session.fullName,
-        role: session.role,
-        email: session.email,
-        tenant: tenant || undefined,
-      }}
-    />
+    <Suspense fallback={<div className="p-8 text-center text-slate-400">Loading calendar...</div>}>
+      <CalendarClient
+        user={{
+          fullName: session.fullName,
+          role: session.role,
+          email: session.email,
+          tenant: tenant || undefined,
+        }}
+      />
+    </Suspense>
   );
 }
