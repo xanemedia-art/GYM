@@ -5,22 +5,24 @@ import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/permissions";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { GenderType, MemberStatus } from "@prisma/client";
+import { generateUniqueMemberCode } from "@/lib/member-code";
+import { assignUidToMember } from "@/lib/door-lock";
 
 const createMemberSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   gender: z.nativeEnum(GenderType),
   phone: z.string().min(10, "Valid 10-digit mobile number required"),
-  whatsappNumber: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  dateOfBirth: z.string().optional().nullable(),
-  photoUrl: z.string().optional(),
-  emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional(),
-  assignedTrainerId: z.string().optional().nullable(),
-  healthMetrics: z.record(z.string(), z.any()).optional(),
-  notes: z.string().optional(),
-  doorLockUid: z.string().optional(),
+  whatsappNumber: z.string().optional().nullable().or(z.literal("")),
+  email: z.string().email().optional().nullable().or(z.literal("")),
+  dateOfBirth: z.string().optional().nullable().or(z.literal("")),
+  photoUrl: z.string().optional().nullable().or(z.literal("")),
+  emergencyContactName: z.string().optional().nullable().or(z.literal("")),
+  emergencyContactPhone: z.string().optional().nullable().or(z.literal("")),
+  assignedTrainerId: z.string().optional().nullable().or(z.literal("")),
+  healthMetrics: z.record(z.string(), z.any()).optional().nullable(),
+  notes: z.string().optional().nullable().or(z.literal("")),
+  doorLockUid: z.string().optional().nullable().or(z.literal("")),
 });
 
 export async function GET(req: NextRequest) {
@@ -111,91 +113,136 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
-    // Check duplicate phone in this tenant
+    // Clean phone number (extract last 10 digits)
+    const cleanPhone = data.phone.replace(/\D/g, "").slice(-10);
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return apiError("Valid 10-digit phone number is required", "INVALID_PHONE", 400);
+    }
+
+    // 1. Check duplicate phone for active members in this tenant
     const existing = await prisma.member.findFirst({
       where: {
         tenantId: session.tenantId,
-        phone: data.phone,
         isDeleted: false,
+        OR: [
+          { phone: cleanPhone },
+          { phone: `+91${cleanPhone}` },
+          { phone: `0${cleanPhone}` },
+          { phone: { endsWith: cleanPhone } },
+        ],
+      },
+      select: {
+        id: true,
+        memberCode: true,
+        firstName: true,
+        lastName: true,
       },
     });
 
     if (existing) {
-      return apiError("A member with this phone number already exists", "DUPLICATE_PHONE", 409);
+      return apiError(
+        `A member with phone ${cleanPhone} already exists (${existing.firstName} ${existing.lastName}, ID: ${existing.memberCode})`,
+        "DUPLICATE_PHONE",
+        409
+      );
     }
 
-    // Generate next member code: e.g. M-1001
-    const count = await prisma.member.count({
-      where: { tenantId: session.tenantId },
+    // 2. Free any SOFT-DELETED member records holding this phone number
+    await prisma.member.updateMany({
+      where: {
+        tenantId: session.tenantId,
+        isDeleted: true,
+        OR: [
+          { phone: cleanPhone },
+          { phone: `+91${cleanPhone}` },
+          { phone: `0${cleanPhone}` },
+          { phone: { endsWith: cleanPhone } },
+        ],
+      },
+      data: {
+        phone: `${cleanPhone}_del_${Date.now()}`,
+        memberCode: `DEL_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      },
     });
-    const memberCode = `M-${String(1001 + count).padStart(4, "0")}`;
+
+    // 3. Generate collision-proof Member Code (e.g. M-1004)
+    const memberCode = await generateUniqueMemberCode(session.tenantId, "M");
+
+    // 4. Safe DOB
+    let parsedDob: Date | null = null;
+    if (data.dateOfBirth && data.dateOfBirth.trim() !== "") {
+      const d = new Date(data.dateOfBirth);
+      if (!isNaN(d.getTime())) {
+        parsedDob = d;
+      }
+    }
 
     const member = await prisma.member.create({
       data: {
         tenantId: session.tenantId,
         memberCode,
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
         gender: data.gender,
-        phone: data.phone,
-        whatsappNumber: data.whatsappNumber || data.phone,
-        email: data.email || null,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+        phone: cleanPhone,
+        whatsappNumber: data.whatsappNumber ? data.whatsappNumber.replace(/\D/g, "").slice(-10) : cleanPhone,
+        email: data.email && data.email.trim() !== "" ? data.email.trim().toLowerCase() : null,
+        dateOfBirth: parsedDob,
         photoUrl: data.photoUrl || null,
-        emergencyContactName: data.emergencyContactName || null,
-        emergencyContactPhone: data.emergencyContactPhone || null,
+        emergencyContactName: data.emergencyContactName?.trim() || null,
+        emergencyContactPhone: data.emergencyContactPhone?.trim() || null,
         assignedTrainerId: data.assignedTrainerId || null,
         healthMetrics: (data.healthMetrics as any) || {},
-        customFields: data.doorLockUid ? { doorLockUid: data.doorLockUid } : {},
-        notes: data.notes || null,
+        customFields: data.doorLockUid ? { doorLockUid: data.doorLockUid.trim() } : {},
+        notes: data.notes?.trim() || null,
         status: MemberStatus.ACTIVE,
       },
     });
 
-    // If doorLockUid is set and tenant has devices, link DeviceUser
-    if (data.doorLockUid) {
+    // If doorLockUid is set, link DeviceUser
+    if (data.doorLockUid && data.doorLockUid.trim() !== "") {
       try {
-        const primaryDevice = await prisma.device.findFirst({
-          where: { tenantId: session.tenantId },
-          orderBy: { createdAt: "asc" },
+        await assignUidToMember({
+          tenantId: session.tenantId,
+          memberId: member.id,
+          uid: data.doorLockUid.trim(),
+          cardNumber: data.doorLockUid.trim(),
         });
-        if (primaryDevice) {
-          const numericEnrollmentId = parseInt(data.doorLockUid.replace(/\D/g, ""), 10) || Math.floor(1000 + Math.random() * 9000);
-          await prisma.deviceUser.create({
-            data: {
-              tenantId: session.tenantId,
-              memberId: member.id,
-              deviceId: primaryDevice.id,
-              deviceEnrollmentId: numericEnrollmentId,
-              cardNumber: data.doorLockUid,
-              isSynced: true,
-            },
-          });
-        }
       } catch (devErr) {
         console.warn("Could not create initial DeviceUser:", devErr);
       }
     }
 
     // Create Audit Log
-    await prisma.auditLog.create({
-      data: {
-        tenantId: session.tenantId,
-        userId: session.id,
-        action: "MEMBER_CREATED",
-        entityType: "MEMBER",
-        entityId: member.id,
-        newValues: {
-          memberCode: member.memberCode,
-          name: `${member.firstName} ${member.lastName}`,
-          phone: member.phone,
+    try {
+      await prisma.auditLog.create({
+        data: {
+          tenantId: session.tenantId,
+          userId: session.id,
+          action: "MEMBER_CREATED",
+          entityType: "MEMBER",
+          entityId: member.id,
+          newValues: {
+            memberCode: member.memberCode,
+            name: `${member.firstName} ${member.lastName}`,
+            phone: member.phone,
+          },
         },
-      },
-    });
+      });
+    } catch (auditErr) {
+      console.warn("Audit log creation non-fatal error:", auditErr);
+    }
 
     return apiSuccess(member, undefined, 201);
   } catch (error: any) {
     console.error("Create Member API Error:", error);
-    return apiError("Failed to register member", "SERVER_ERROR", 500);
+    if (error?.code === "P2002") {
+      return apiError(
+        "A member with these details already exists in this gym branch.",
+        "DUPLICATE_ENTRY",
+        409
+      );
+    }
+    return apiError(error?.message || "Failed to register member", "SERVER_ERROR", 500);
   }
 }

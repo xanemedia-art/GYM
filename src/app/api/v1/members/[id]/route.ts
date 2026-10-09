@@ -202,10 +202,15 @@ export async function DELETE(
       return apiError("Member not found", "NOT_FOUND", 404);
     }
 
-    // Soft delete
+    // Soft delete & release unique constraints so the phone number can be re-registered
     await prisma.member.update({
       where: { id: existing.id },
-      data: { isDeleted: true, status: MemberStatus.CANCELLED },
+      data: {
+        isDeleted: true,
+        status: MemberStatus.CANCELLED,
+        phone: `${existing.phone}_del_${Date.now()}`,
+        memberCode: `${existing.memberCode}_del_${Date.now()}`,
+      },
     });
 
     await prisma.auditLog.create({

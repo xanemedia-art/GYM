@@ -6,6 +6,7 @@ import { hasPermission } from "@/lib/permissions";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { createRazorpayPaymentLink } from "@/lib/payments/razorpay";
 import { calculateGst, formatInvoiceNumber, getIndianFinancialYear, GYM_HSN_SAC_CODE } from "@/lib/gst";
+import { generateUniqueMemberCode } from "@/lib/member-code";
 
 const customPaymentSchema = z.object({
   memberId: z.string().uuid().optional(),
@@ -69,9 +70,8 @@ export async function POST(req: NextRequest) {
       });
 
       if (!existingMember) {
-        // Create a walk-in/lead member record
-        const count = await prisma.member.count({ where: { tenantId: session.tenantId } });
-        const memberCode = `BFF-${(count + 1).toString().padStart(4, "0")}`;
+        // Create a walk-in/lead member record with guaranteed unique code
+        const memberCode = await generateUniqueMemberCode(session.tenantId, "BFF");
         const nameParts = clientName.trim().split(" ");
         const firstName = nameParts[0];
         const lastName = nameParts.slice(1).join(" ") || "";

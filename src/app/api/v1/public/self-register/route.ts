@@ -7,6 +7,7 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { broadcastPushNotification } from "@/lib/push-notifications";
 import { GenderType, MemberStatus, InvoiceStatus } from "@prisma/client";
+import { generateUniqueMemberCode } from "@/lib/member-code";
 
 const selfRegisterSchema = z.object({
   token: z.string().min(1, "Invite token required"),
@@ -127,6 +128,8 @@ export async function POST(req: NextRequest) {
 
     const tenantId = payload.tenantId;
 
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+
     // Verify plan
     const [plan, tenantSettings, existingMember] = await Promise.all([
       prisma.membershipPlan.findFirst({
@@ -134,7 +137,18 @@ export async function POST(req: NextRequest) {
         include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
       }),
       prisma.tenantSettings.findUnique({ where: { tenantId } }),
-      prisma.member.findFirst({ where: { tenantId, phone, isDeleted: false } }),
+      prisma.member.findFirst({
+        where: {
+          tenantId,
+          isDeleted: false,
+          OR: [
+            { phone: cleanPhone },
+            { phone: `+91${cleanPhone}` },
+            { phone: `0${cleanPhone}` },
+            { phone: { endsWith: cleanPhone } },
+          ],
+        },
+      }),
     ]);
 
     if (!plan) {
@@ -143,11 +157,29 @@ export async function POST(req: NextRequest) {
 
     if (existingMember) {
       return apiError(
-        `A member with phone number ${phone} is already registered. Please visit the front desk for renewal.`,
+        `A member with phone number ${cleanPhone} is already registered. Please visit the front desk for renewal.`,
         "DUPLICATE_MEMBER",
         409
       );
     }
+
+    // Free any soft-deleted member records holding this phone number
+    await prisma.member.updateMany({
+      where: {
+        tenantId,
+        isDeleted: true,
+        OR: [
+          { phone: cleanPhone },
+          { phone: `+91${cleanPhone}` },
+          { phone: `0${cleanPhone}` },
+          { phone: { endsWith: cleanPhone } },
+        ],
+      },
+      data: {
+        phone: `${cleanPhone}_del_${Date.now()}`,
+        memberCode: `DEL_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      },
+    });
 
     let latestVersion = plan.versions[0];
     if (!latestVersion) {
@@ -165,10 +197,9 @@ export async function POST(req: NextRequest) {
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + latestVersion.durationDays);
 
-    // Generate sequential member code
-    const memberCount = await prisma.member.count({ where: { tenantId } });
-    const prefix = tenantSettings?.invoicePrefix || "FZ";
-    const memberCode = `${prefix}-${1000 + memberCount + 1}`;
+    // Generate collision-proof sequential member code
+    const prefix = tenantSettings?.invoicePrefix || "BF";
+    const memberCode = await generateUniqueMemberCode(tenantId, prefix);
 
     // Run creation in atomic transaction
     const result = await prisma.$transaction(async (tx) => {
