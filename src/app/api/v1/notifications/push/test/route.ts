@@ -18,7 +18,11 @@ export async function POST(req: NextRequest) {
 
     // 1. If explicit subscription provided in body
     if (body.endpoint && body.keys?.p256dh && body.keys?.auth) {
+      const existingInDb = await prisma.pushSubscription.findUnique({
+        where: { endpoint: body.endpoint },
+      });
       targetSubscription = {
+        id: existingInDb?.id,
         endpoint: body.endpoint,
         p256dh: body.keys.p256dh,
         auth: body.keys.auth,

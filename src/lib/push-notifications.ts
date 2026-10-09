@@ -1,16 +1,15 @@
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 
-// Default dev VAPID keypair so local dev and testing work immediately out-of-the-box
-// Can be overridden via environment variables in production
+// Default RFC 8292 compliant matching VAPID keypair
 const DEFAULT_VAPID_PUBLIC_KEY =
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
   process.env.VAPID_PUBLIC_KEY ||
-  "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
+  "BO93RP00Ulpv89DaYuXpVprTl_jwmLuouRyWuVPWzLqeQC6QFNs7LNMCT5i_bv2EablmLtuh4yoyc9vQizeMBcw";
 
 const DEFAULT_VAPID_PRIVATE_KEY =
   process.env.VAPID_PRIVATE_KEY ||
-  "UU2iMo0hiTstaeFlmWpbdDOvLHYL-epPbqcTHZyUMsg";
+  "uk_fVnL9q8SncZpeEsewrsO26zO5Hg7afBoxgibqdBM";
 
 const VAPID_SUBJECT =
   process.env.VAPID_SUBJECT || "mailto:support@befreefitness.in";
@@ -33,7 +32,11 @@ function ensureVapidConfigured() {
 }
 
 export function getVapidPublicKey(): string {
-  return DEFAULT_VAPID_PUBLIC_KEY;
+  return (
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+    process.env.VAPID_PUBLIC_KEY ||
+    DEFAULT_VAPID_PUBLIC_KEY
+  );
 }
 
 export interface PushNotificationPayload {
@@ -67,7 +70,7 @@ export function formatPushPayload(payload: PushNotificationPayload): string {
 
 /**
  * Sends a web push notification to a single device subscription.
- * Automatically deactivates the subscription if the push service returns 404 or 410 (expired/uninstalled).
+ * Automatically deactivates the subscription if the push service returns 404, 410, or key mismatch.
  */
 export async function sendPushNotification(
   subscription: {
@@ -102,30 +105,41 @@ export async function sendPushNotification(
     };
   } catch (err: any) {
     const statusCode = err.statusCode || err.status;
+    const bodyStr = typeof err.body === "string" ? err.body : JSON.stringify(err.body || "");
     const isExpired = statusCode === 410 || statusCode === 404;
+    const isKeyMismatch =
+      (statusCode === 400 && bodyStr.includes("VapidPkHashMismatch")) ||
+      (statusCode === 403 && bodyStr.includes("BadJwtToken"));
 
     console.warn(
-      `[WebPush] Push delivery failed for endpoint: ${subscription.endpoint.slice(0, 40)}... (status: ${statusCode})`
+      `[WebPush] Push delivery failed for endpoint: ${subscription.endpoint.slice(0, 45)}... (status: ${statusCode}, reason: ${bodyStr})`
     );
 
-    // Auto-clean expired subscription if ID is known
-    if (isExpired && subscription.id) {
+    // Auto-clean expired or mismatched subscription if ID is known
+    if ((isExpired || isKeyMismatch) && subscription.id) {
       try {
         await prisma.pushSubscription.update({
           where: { id: subscription.id },
           data: { isActive: false },
         });
-        console.log(`[WebPush] Deactivated expired subscription ID: ${subscription.id}`);
+        console.log(`[WebPush] Deactivated stale subscription ID: ${subscription.id}`);
       } catch (dbErr) {
-        console.error("[WebPush] Failed to deactivate expired subscription:", dbErr);
+        console.error("[WebPush] Failed to deactivate invalid subscription:", dbErr);
       }
+    }
+
+    let userFriendlyError = err.message || "Failed to deliver push notification";
+    if (isKeyMismatch) {
+      userFriendlyError = "Push encryption key mismatch. Device subscription was reset. Tap 'Enable Push Notifications' to refresh.";
+    } else if (isExpired) {
+      userFriendlyError = "Device push subscription has expired. Tap 'Enable Push Notifications' to refresh.";
     }
 
     return {
       success: false,
       statusCode,
-      error: err.message || "Failed to deliver push notification",
-      expired: isExpired,
+      error: userFriendlyError,
+      expired: isExpired || isKeyMismatch,
     };
   }
 }

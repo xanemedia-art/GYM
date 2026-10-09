@@ -69,7 +69,33 @@ export function usePushNotifications(): PushNotificationState {
       const registration = await navigator.serviceWorker.getRegistration("/sw.js");
       if (registration) {
         const subscription = await registration.pushManager.getSubscription();
-        setIsSubscribed(!!subscription);
+        if (subscription) {
+          // Verify if subscription applicationServerKey matches current server key
+          try {
+            const keyRes = await fetch("/api/v1/notifications/push/vapid-key");
+            const keyJson = await keyRes.json();
+            const serverKey = keyJson.data?.publicKey;
+            if (serverKey && (subscription as any).options?.applicationServerKey) {
+              const currentKeyArray = new Uint8Array((subscription as any).options.applicationServerKey);
+              const expectedKeyArray = urlBase64ToUint8Array(serverKey);
+              const isMatch =
+                currentKeyArray.length === expectedKeyArray.length &&
+                currentKeyArray.every((val, i) => val === expectedKeyArray[i]);
+              if (!isMatch) {
+                console.warn("[Push] Subscription registered with outdated VAPID key. Cleaning up stale subscription.");
+                await subscription.unsubscribe();
+                setIsSubscribed(false);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (e) {
+            console.warn("[Push] VAPID key sync check:", e);
+          }
+          setIsSubscribed(true);
+        } else {
+          setIsSubscribed(false);
+        }
       } else {
         setIsSubscribed(false);
       }
@@ -113,7 +139,17 @@ export function usePushNotifications(): PushNotificationState {
       });
       await navigator.serviceWorker.ready;
 
-      // 3. Fetch VAPID Public Key from server
+      // 3. Clean up any existing subscription first to prevent InvalidStateError or stale keys
+      const existing = await registration.pushManager.getSubscription();
+      if (existing) {
+        try {
+          await existing.unsubscribe();
+        } catch (unsubErr) {
+          console.warn("[Push] Cleanup prior subscription:", unsubErr);
+        }
+      }
+
+      // 4. Fetch VAPID Public Key from server
       const keyRes = await fetch("/api/v1/notifications/push/vapid-key");
       const keyJson = await keyRes.json();
       if (!keyJson.success || !keyJson.data?.publicKey) {
@@ -122,7 +158,7 @@ export function usePushNotifications(): PushNotificationState {
 
       const applicationServerKey = urlBase64ToUint8Array(keyJson.data.publicKey);
 
-      // 4. Subscribe to browser push service
+      // 5. Subscribe to browser push service with latest key
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey as unknown as BufferSource,
@@ -134,7 +170,7 @@ export function usePushNotifications(): PushNotificationState {
         throw new Error("Malformed push subscription returned by browser.");
       }
 
-      // 5. Send subscription to gym backend
+      // 6. Send subscription to gym backend
       const deviceType = isStandalonePWA
         ? "MOBILE_PWA"
         : isIOS
@@ -217,13 +253,50 @@ export function usePushNotifications(): PushNotificationState {
           }
         : {};
 
-      const res = await fetch("/api/v1/notifications/push/test", {
+      let res = await fetch("/api/v1/notifications/push/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyPayload),
       });
 
-      const json = await res.json();
+      let json = await res.json();
+
+      // If push service reports stale/mismatched subscription, auto-heal by refreshing subscription
+      if (!res.ok || !json.success) {
+        const errorDetails = json.error?.details || {};
+        const errorMsg = (json.error?.message || "").toLowerCase();
+        const shouldAutoResubscribe =
+          errorDetails.expired ||
+          errorDetails.statusCode === 400 ||
+          errorDetails.statusCode === 403 ||
+          errorDetails.statusCode === 404 ||
+          errorDetails.statusCode === 410 ||
+          errorMsg.includes("key mismatch") ||
+          errorMsg.includes("re-enable") ||
+          errorMsg.includes("refresh");
+
+        if (shouldAutoResubscribe) {
+          console.log("[Push] Subscription stale/mismatched, auto-refreshing device subscription with latest VAPID key...");
+          const reSubSuccess = await subscribe();
+          if (reSubSuccess) {
+            const freshRegistration = await navigator.serviceWorker.getRegistration("/sw.js");
+            const freshSub = await freshRegistration?.pushManager.getSubscription();
+            if (freshSub) {
+              const retryPayload = {
+                endpoint: freshSub.endpoint,
+                keys: freshSub.toJSON().keys,
+              };
+              res = await fetch("/api/v1/notifications/push/test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(retryPayload),
+              });
+              json = await res.json();
+            }
+          }
+        }
+      }
+
       if (!res.ok || !json.success) {
         throw new Error(json.error?.message || "Failed to send test push notification.");
       }
