@@ -104,10 +104,11 @@ async function main() {
 
   // 4. Create membership plans with versions
   const plansData = [
-    { name: "Monthly Strength Plan", durationDays: 30, basePrice: 2500, joiningFee: 500 },
-    { name: "Quarterly Transformation Plan", durationDays: 90, basePrice: 6500, joiningFee: 0 },
-    { name: "Half-Yearly Elite Plan", durationDays: 180, basePrice: 11500, joiningFee: 0 },
-    { name: "Annual Platinum Pro Plan", durationDays: 365, basePrice: 19999, joiningFee: 0 },
+    { name: "Daily Workout Pass", durationDays: 1, basePrice: 200, joiningFee: 0, description: "1-Day athletic floor access, locker & shower facilities." },
+    { name: "Monthly Strength Plan", durationDays: 30, basePrice: 2000, joiningFee: 0, description: "30 Days unlimited gym floor access, eSSL smart biometric access, locker room & certified trainer support." },
+    { name: "Quarterly Transformation Plan", durationDays: 90, basePrice: 5000, joiningFee: 0, description: "90 Days dedicated body recomposition cycle, customized split workout guide & cross-branch access." },
+    { name: "Semiannual Elite Plan", durationDays: 180, basePrice: 8000, joiningFee: 0, description: "180 Days athletic conditioning, regular progress reviews, priority locker access & clinical fitness assessment." },
+    { name: "Yearly Platinum VIP Plan", durationDays: 365, basePrice: 14000, joiningFee: 0, description: "365 Days complete all-access pass across all branches, 30-day membership freeze privilege, custom nutrition guide & VIP perks." },
   ];
 
   for (const plan of plansData) {

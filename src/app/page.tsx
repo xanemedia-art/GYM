@@ -72,56 +72,71 @@ export default function BrandHomePage() {
 
   const membershipPasses = [
     {
-      name: "1-Day Mountain Pass",
+      name: "Daily Workout Pass",
       duration: "1 Day Access",
-      price: "₹300",
-      description: "Ideal for travelers and guests visiting Kullu Valley or Dehradun.",
+      price: "₹200",
+      description: "Ideal for travelers, guests, and single-session visitors.",
       features: [
-        "Full floor & equipment access",
-        "Steam & shower facilities",
-        "Locker storage included",
+        "Full gym floor & equipment access",
+        "Locker & shower facilities",
         "Valid for any 1 branch",
+        "Access to floor trainers",
       ],
-      badge: "Traveler",
+      badge: "Drop-in",
       popular: false,
     },
     {
-      name: "Monthly Strength Pass",
-      duration: "1 Month",
-      price: "₹2,200",
-      description: "Complete unhindered access with initial physical assessment.",
+      name: "Monthly Strength Plan",
+      duration: "1 Month (30 Days)",
+      price: "₹2,000",
+      description: "Complete unhindered athletic access with smart biometric entry.",
       features: [
         "Unlimited floor access",
         "eSSL Biometric smart door entry",
         "Locker & steam room access",
         "Personalized split workout sheet",
-        "Access to certified floor trainers",
+        "Certified floor trainer guidance",
       ],
-      badge: "Standard",
+      badge: "Monthly",
       popular: false,
     },
     {
-      name: "Transformation Quarter",
-      duration: "3 Months",
-      price: "₹5,500",
+      name: "Quarterly Transformation Plan",
+      duration: "3 Months (90 Days)",
+      price: "₹5,000",
       description: "Our signature high-conversion transformation cycle.",
       features: [
-        "Everything in Monthly Pass",
-        "Free body composition analysis",
-        "Clinical nutrition & diet chart",
-        "Cross-branch access across Kullu",
+        "Everything in Monthly Plan",
+        "Body composition assessment",
+        "Clinical nutrition & diet guide",
+        "Cross-branch training access",
         "1 Complimentary PT session",
       ],
       badge: "Most Popular",
       popular: true,
     },
     {
-      name: "Annual Elite All-Access",
-      duration: "12 Months",
-      price: "₹16,000",
+      name: "Semiannual Elite Plan",
+      duration: "6 Months (180 Days)",
+      price: "₹8,000",
+      description: "Long-term athletic progression and sustainable physique development.",
+      features: [
+        "Everything in Quarterly Plan",
+        "15 Days membership freeze option",
+        "Periodic progress tracking",
+        "Priority locker access",
+        "Cross-branch access included",
+      ],
+      badge: "Best Value",
+      popular: false,
+    },
+    {
+      name: "Yearly Platinum VIP Plan",
+      duration: "12 Months (365 Days)",
+      price: "₹14,000",
       description: "The ultimate athlete membership with VIP perks and freezing options.",
       features: [
-        "All 6 branches access (Kullu & Dehradun)",
+        "All branches access (Kullu & Dehradun)",
         "30 Days membership freeze option",
         "Exclusive Be Free Fitness Gym Bag & Shaker",
         "Monthly progress review with Master Coach",
@@ -369,20 +384,24 @@ export default function BrandHomePage() {
                       p.durationDays === 1
                         ? "1 Day Access"
                         : p.durationDays >= 365
-                        ? "12 Months"
+                        ? "12 Months (Yearly)"
                         : p.durationDays >= 180
-                        ? "6 Months"
+                        ? "6 Months (Semiannual)"
                         : p.durationDays >= 90
-                        ? "3 Months"
+                        ? "3 Months (Quarterly)"
+                        : p.durationDays >= 30
+                        ? "1 Month (Monthly)"
                         : `${p.durationDays} Days`;
                     const badge =
                       p.durationDays === 1
-                        ? "Traveler"
+                        ? "Drop-in"
                         : isPopular
                         ? "Most Popular"
                         : p.durationDays >= 365
                         ? "VIP Elite"
-                        : "Standard";
+                        : p.durationDays >= 180
+                        ? "Best Value"
+                        : "Monthly";
 
                     return {
                       name: p.name,
@@ -397,7 +416,7 @@ export default function BrandHomePage() {
                 : membershipPasses;
 
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
                 {activePasses.map((pass) => (
               <div
                 key={pass.name}

@@ -39,7 +39,7 @@ export default function PlansClient({ user }: PlansClientProps) {
   const [createForm, setCreateForm] = useState({
     name: "",
     durationDays: 30,
-    basePrice: 2500,
+    basePrice: 2000,
     joiningFee: 0,
     description: "",
   });
@@ -52,7 +52,7 @@ export default function PlansClient({ user }: PlansClientProps) {
   const [editForm, setEditForm] = useState({
     name: "",
     durationDays: 30,
-    basePrice: 2500,
+    basePrice: 2000,
     joiningFee: 0,
     description: "",
     isActive: true,
@@ -115,7 +115,7 @@ export default function PlansClient({ user }: PlansClientProps) {
       }
 
       setIsCreateOpen(false);
-      setCreateForm({ name: "", durationDays: 30, basePrice: 2500, joiningFee: 0, description: "" });
+      setCreateForm({ name: "", durationDays: 30, basePrice: 2000, joiningFee: 0, description: "" });
       showToast("Membership plan created successfully!");
       fetchPlans();
     } catch (err: any) {
