@@ -32,12 +32,32 @@ export async function GET(req: NextRequest) {
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // 1. Member metrics
-    const [totalMembers, activeMembers, expiringSoonMembers, expiredMembers] = await Promise.all([
+    // 1. Member metrics & Pending Walk-in Verifications
+    const [totalMembers, activeMembers, expiringSoonMembers, expiredMembers, pendingMembersCount, pendingMembersList] = await Promise.all([
       prisma.member.count({ where: { tenantId, isDeleted: false } }),
       prisma.member.count({ where: { tenantId, status: MemberStatus.ACTIVE, isDeleted: false } }),
       prisma.member.count({ where: { tenantId, status: MemberStatus.EXPIRING_SOON, isDeleted: false } }),
       prisma.member.count({ where: { tenantId, status: MemberStatus.EXPIRED, isDeleted: false } }),
+      prisma.member.count({ where: { tenantId, status: MemberStatus.LEAD, isDeleted: false } }),
+      prisma.member.findMany({
+        where: { tenantId, status: MemberStatus.LEAD, isDeleted: false },
+        take: 10,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          memberCode: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          whatsappNumber: true,
+          gender: true,
+          dateOfBirth: true,
+          healthMetrics: true,
+          createdAt: true,
+          notes: true,
+          customFields: true,
+        },
+      }),
     ]);
 
     // 2. Revenue & Financials
@@ -167,6 +187,10 @@ export async function GET(req: NextRequest) {
         active: activeMembers,
         expiringSoon: expiringSoonMembers,
         expired: expiredMembers,
+      },
+      pendingMembers: {
+        count: pendingMembersCount,
+        list: pendingMembersList,
       },
       revenue: {
         today: Number(todayPayments._sum.amount || 0),

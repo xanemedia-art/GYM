@@ -13,7 +13,13 @@ const gateRegisterSchema = z.object({
   whatsappNumber: z.string().optional(),
   email: z.string().email("Valid email required").optional().or(z.literal("")),
   gender: z.nativeEnum(GenderType).default(GenderType.MALE),
-  dateOfBirth: z.string().optional(),
+  dateOfBirth: z.string().min(1, "Date of birth is mandatory"),
+  height: z
+    .union([z.number(), z.string()])
+    .refine((v) => !isNaN(Number(v)) && Number(v) >= 40 && Number(v) <= 250, "Height (cm) is mandatory (40 - 250 cm)"),
+  weight: z
+    .union([z.number(), z.string()])
+    .refine((v) => !isNaN(Number(v)) && Number(v) >= 20 && Number(v) <= 300, "Current weight (kg) is mandatory (20 - 300 kg)"),
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
   planId: z.string().uuid("Valid plan ID required").optional(),
@@ -46,10 +52,15 @@ export async function POST(req: NextRequest) {
       email,
       gender,
       dateOfBirth,
+      height,
+      weight,
       emergencyContactName,
       emergencyContactPhone,
       planId,
     } = parsed.data;
+
+    const numHeight = Number(height);
+    const numWeight = Number(weight);
 
     // Clean phone number
     const cleanPhone = phone.replace(/\D/g, "").slice(-10);
@@ -125,14 +136,20 @@ export async function POST(req: NextRequest) {
         phone: cleanPhone,
         whatsappNumber: whatsappNumber ? whatsappNumber.replace(/\D/g, "").slice(-10) : cleanPhone,
         email: email || null,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+        dateOfBirth: new Date(dateOfBirth),
         emergencyContactName: emergencyContactName?.trim() || null,
         emergencyContactPhone: emergencyContactPhone?.trim() || null,
         status: MemberStatus.LEAD, // Saved as Lead first, waiting for front desk offline fee clearance
-        notes: `Self-onboarded via Gate QR Code. ${planDetails}. Awaiting front-desk offline payment clearance.`,
+        healthMetrics: {
+          heightCm: numHeight,
+          weightKg: numWeight,
+        },
+        notes: `Self-onboarded via Gate QR Code. Height: ${numHeight} cm, Weight: ${numWeight} kg. ${planDetails}. Awaiting front-desk offline payment clearance.`,
         customFields: {
           requestedPlanId: planId || null,
           requestedPlanName: planDetails,
+          heightCm: numHeight,
+          weightKg: numWeight,
           source: "GATE_QR_CODE",
         },
       },

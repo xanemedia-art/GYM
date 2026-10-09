@@ -16,6 +16,7 @@ import {
   Search,
   Menu,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GlobalSearchDialog } from "./GlobalSearchDialog";
@@ -51,13 +52,14 @@ export function AppLayout({ children, user }: AppLayoutProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // 5 Core Operational Pillars: Dashboard, Members, Attendance, Calendar, Gate QR Poster
+  // Core Operational Pillars: Dashboard, Members, Attendance, Calendar, Gate QR Poster, WhatsApp Desk
   const primaryNavItems = [
     { name: "Dashboard", href: "/portal", icon: LayoutDashboard, shortName: "Home" },
     { name: "Members", href: "/members", icon: Users, shortName: "Members" },
     { name: "Attendance", href: "/attendance", icon: Fingerprint, shortName: "Attendance" },
     { name: "Calendar & Dates", href: "/calendar", icon: CalendarDays, shortName: "Calendar" },
     { name: "Gate QR Poster", href: "/gate-qr", icon: QrCode, shortName: "Gate QR" },
+    { name: "WhatsApp Desk", href: "/whatsapp", icon: MessageSquare, shortName: "WhatsApp" },
   ];
 
   const handleLogout = async () => {

@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { Users, IndianRupee, Fingerprint, TrendingUp, AlertCircle } from "lucide-react";
-import { formatINR } from "@/lib/utils";
+import { Users, UserCheck, Fingerprint, Clock, AlertCircle } from "lucide-react";
 
 interface StatCardsProps {
   stats: {
@@ -12,10 +11,9 @@ interface StatCardsProps {
       expiringSoon: number;
       expired: number;
     };
-    revenue: {
-      today: number;
-      thisMonth: number;
-      outstandingBalance: number;
+    pendingMembers?: {
+      count: number;
+      list: any[];
     };
     attendance: {
       todayCheckIns: number;
@@ -25,6 +23,8 @@ interface StatCardsProps {
 }
 
 export function StatCards({ stats }: StatCardsProps) {
+  const pendingCount = stats.pendingMembers?.count || 0;
+
   const cards = [
     {
       title: "Active Members",
@@ -37,14 +37,14 @@ export function StatCards({ stats }: StatCardsProps) {
       accentBar: "bg-emerald-500",
     },
     {
-      title: "Today's Collection",
-      value: formatINR(stats.revenue.today),
-      subtitle: `${formatINR(stats.revenue.thisMonth)} this month`,
-      icon: IndianRupee,
-      trend: "+14% vs yesterday",
-      trendColor: "text-emerald-700 bg-emerald-50",
-      iconBg: "bg-blue-50 text-blue-600 border-blue-100",
-      accentBar: "bg-blue-500",
+      title: "Pending Plan Allocation",
+      value: pendingCount,
+      subtitle: "Gate Walk-ins & Inquiries",
+      icon: UserCheck,
+      trend: pendingCount > 0 ? `${pendingCount} Needs Verification` : "All Verified",
+      trendColor: pendingCount > 0 ? "text-amber-700 bg-amber-50 font-bold" : "text-emerald-700 bg-emerald-50",
+      iconBg: "bg-amber-50 text-amber-600 border-amber-100",
+      accentBar: "bg-amber-500",
     },
     {
       title: "Today's Check-ins",
@@ -57,12 +57,12 @@ export function StatCards({ stats }: StatCardsProps) {
       accentBar: "bg-purple-500",
     },
     {
-      title: "Outstanding Dues",
-      value: formatINR(stats.revenue.outstandingBalance),
-      subtitle: "Pending Fee Collections",
-      icon: AlertCircle,
-      trend: "Action Required",
-      trendColor: "text-rose-700 bg-rose-50",
+      title: "Expiring Passes",
+      value: stats.members.expiringSoon,
+      subtitle: "Passes Expiring Within 7 Days",
+      icon: Clock,
+      trend: stats.members.expiringSoon > 0 ? "WhatsApp Reminders Active" : "No Urgent Expiries",
+      trendColor: stats.members.expiringSoon > 0 ? "text-rose-700 bg-rose-50" : "text-emerald-700 bg-emerald-50",
       iconBg: "bg-rose-50 text-rose-600 border-rose-100",
       accentBar: "bg-rose-500",
     },

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { getSession } from "@/lib/auth";
+import { getSession, signSessionToken, getSessionCookieOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/lib/api-response";
 
@@ -285,5 +285,104 @@ export async function PATCH(req: NextRequest) {
   } catch (error: any) {
     console.error("Update Tenant Settings Error:", error);
     return apiError("Failed to update branch settings", "SERVER_ERROR", 500);
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return apiError("Unauthorized", "UNAUTHORIZED", 401);
+    }
+
+    if (session.role !== "GYM_OWNER" && session.role !== "SUPER_ADMIN") {
+      return apiError("Only gym owners can delete or remove gym branches", "FORBIDDEN", 403);
+    }
+
+    let targetTenantId = req.nextUrl.searchParams.get("tenantId") || req.nextUrl.searchParams.get("id");
+    if (!targetTenantId) {
+      try {
+        const body = await req.json();
+        targetTenantId = body.tenantId || body.id;
+      } catch {
+        // body might be empty if query param was intended
+      }
+    }
+
+    if (!targetTenantId) {
+      targetTenantId = session.tenantId || null;
+    }
+
+    if (!targetTenantId) {
+      return apiError("Branch identifier is required", "BAD_REQUEST", 400);
+    }
+
+    const targetTenant = await prisma.tenant.findUnique({
+      where: { id: targetTenantId },
+      select: { id: true, businessName: true, isActive: true },
+    });
+
+    if (!targetTenant) {
+      return apiError("Gym branch not found", "NOT_FOUND", 404);
+    }
+
+    // Safeguard: Ensure at least one active branch remains
+    const totalActiveBranches = await prisma.tenant.count({
+      where: { isActive: true },
+    });
+
+    if (totalActiveBranches <= 1) {
+      return apiError(
+        "Cannot delete your only remaining branch. You must maintain at least one active branch in your gym chain.",
+        "FORBIDDEN",
+        400
+      );
+    }
+
+    // Soft delete / deactivate the branch
+    await prisma.tenant.update({
+      where: { id: targetTenant.id },
+      data: { isActive: false },
+    });
+
+    // If the currently active branch was deleted, switch session to another active branch
+    let switchedBranch = null;
+    let newToken = null;
+    let cookieOptions = null;
+
+    if (session.tenantId === targetTenant.id) {
+      const fallback = await prisma.tenant.findFirst({
+        where: { isActive: true, id: { not: targetTenant.id } },
+        select: { id: true, businessName: true },
+      });
+
+      if (fallback) {
+        switchedBranch = fallback;
+        const updatedPayload = {
+          id: session.id,
+          email: session.email,
+          fullName: session.fullName,
+          role: session.role,
+          tenantId: fallback.id,
+        };
+        newToken = await signSessionToken(updatedPayload);
+        cookieOptions = getSessionCookieOptions();
+      }
+    }
+
+    const res = apiSuccess({
+      message: `Branch "${targetTenant.businessName}" removed successfully`,
+      deletedTenantId: targetTenant.id,
+      switchedToBranch: switchedBranch,
+    });
+
+    if (newToken && cookieOptions) {
+      res.cookies.set(cookieOptions.name, newToken, cookieOptions);
+    }
+
+    return res;
+  } catch (error: any) {
+    console.error("Delete Tenant Error:", error);
+    return apiError("Failed to remove gym branch", "SERVER_ERROR", 500);
   }
 }

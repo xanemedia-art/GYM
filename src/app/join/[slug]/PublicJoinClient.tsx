@@ -61,6 +61,8 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
     email: "",
     gender: "MALE",
     dateOfBirth: "",
+    height: "",
+    currentWeight: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
     planId: plans.length > 0 ? plans[0].id : "",
@@ -76,6 +78,20 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
     }
     if (formData.phone.replace(/\D/g, "").length < 10) {
       setError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!formData.dateOfBirth.trim()) {
+      setError("Date of birth is mandatory. Please select your birth date.");
+      return;
+    }
+    const numHeight = Number(formData.height);
+    if (!formData.height.trim() || isNaN(numHeight) || numHeight < 40 || numHeight > 250) {
+      setError("Height is mandatory. Please enter a valid height in cm (e.g. 175).");
+      return;
+    }
+    const numWeight = Number(formData.currentWeight);
+    if (!formData.currentWeight.trim() || isNaN(numWeight) || numWeight < 20 || numWeight > 300) {
+      setError("Current weight is mandatory. Please enter a valid weight in kg (e.g. 72).");
       return;
     }
     setError(null);
@@ -98,7 +114,9 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
           whatsappNumber: formData.whatsappNumber || formData.phone,
           email: formData.email || undefined,
           gender: formData.gender,
-          dateOfBirth: formData.dateOfBirth || undefined,
+          dateOfBirth: formData.dateOfBirth,
+          height: Number(formData.height),
+          weight: Number(formData.currentWeight),
           emergencyContactName: formData.emergencyContactName || undefined,
           emergencyContactPhone: formData.emergencyContactPhone || undefined,
           planId: formData.planId || undefined,
@@ -293,14 +311,53 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
               </div>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-slate-300 mb-1">Date of Birth</label>
-              <input
-                type="date"
-                value={formData.dateOfBirth}
-                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                className="w-full bg-slate-800/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-hidden focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition-all"
-              />
+            {/* Mandatory Fitness & KYC Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  Date of Birth <span className="text-emerald-400">*</span>
+                </label>
+                <input
+                  required
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                  className="w-full bg-slate-800/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-hidden focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  Height (cm) <span className="text-emerald-400">*</span>
+                </label>
+                <input
+                  required
+                  type="number"
+                  placeholder="e.g. 175"
+                  min="40"
+                  max="250"
+                  value={formData.height}
+                  onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                  className="w-full bg-slate-800/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-hidden focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  Current Weight (kg) <span className="text-emerald-400">*</span>
+                </label>
+                <input
+                  required
+                  type="number"
+                  placeholder="e.g. 72"
+                  min="20"
+                  max="300"
+                  step="0.5"
+                  value={formData.currentWeight}
+                  onChange={(e) => setFormData({ ...formData, currentWeight: e.target.value })}
+                  className="w-full bg-slate-800/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-hidden focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition-all"
+                />
+              </div>
             </div>
 
             {/* Emergency Contact */}
@@ -467,6 +524,13 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Gym Branch:</span>
                 <span className="font-bold text-white">{tenant.businessName}</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400">Physical Metrics:</span>
+                <span className="font-semibold text-slate-200">
+                  {formData.height} cm • {formData.currentWeight} kg (DOB: {formData.dateOfBirth})
+                </span>
               </div>
 
               <div className="flex justify-between items-center">

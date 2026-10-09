@@ -17,6 +17,7 @@ import {
   Loader2,
   AlertCircle,
   X,
+  Trash2,
 } from "lucide-react";
 
 interface SettingsClientProps {
@@ -101,6 +102,41 @@ export default function SettingsClient({ user }: SettingsClientProps) {
       alert("Error switching branch");
     } finally {
       setSwitchingId(null);
+    }
+  };
+
+  const [deletingBranchId, setDeletingBranchId] = useState<string | null>(null);
+
+  const handleDeleteBranch = async (branch: any) => {
+    if (branches.length <= 1) {
+      alert("Cannot delete your only remaining branch. You must maintain at least one active branch in your gym chain.");
+      return;
+    }
+
+    const confirmed = confirm(
+      `Are you sure you want to remove/delete the branch "${branch.businessName}"?\n\nThis will deactivate the branch workspace. If this is your current active branch, you will be switched to another location.`
+    );
+    if (!confirmed) return;
+
+    setDeletingBranchId(branch.id);
+    try {
+      const res = await fetch(`/api/v1/tenants?tenantId=${branch.id}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error?.message || "Failed to delete branch");
+      }
+      alert(`Branch "${branch.businessName}" removed successfully.`);
+      if (branch.isCurrent || branch.id === tenant?.id) {
+        window.location.reload();
+      } else {
+        fetchBranches();
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to remove branch");
+    } finally {
+      setDeletingBranchId(null);
     }
   };
 
@@ -297,28 +333,49 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-200/60">
-                    {isCurrent ? (
-                      <div className="text-xs font-bold text-emerald-700 flex items-center gap-1.5">
-                        <Check className="h-4 w-4" />
-                        <span>Currently Managing This Branch</span>
-                      </div>
-                    ) : (
+                  <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between gap-2">
+                    <div className="flex-1">
+                      {isCurrent ? (
+                        <div className="text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+                          <Check className="h-4 w-4" />
+                          <span>Active Context</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleSwitchGym(b.id)}
+                          disabled={isSwitching}
+                          className="w-full py-2 px-3 rounded-lg bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-700 text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 transition-all shadow-2xs"
+                        >
+                          {isSwitching ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                              <span>Switching...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Switch Branch</span>
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {isOwnerOrAdmin && (
                       <button
-                        onClick={() => handleSwitchGym(b.id)}
-                        disabled={isSwitching}
-                        className="w-full py-2 px-3 rounded-lg bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-700 text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 transition-all shadow-2xs"
+                        onClick={() => handleDeleteBranch(b)}
+                        disabled={deletingBranchId === b.id || branches.length <= 1}
+                        title={branches.length <= 1 ? "Cannot delete the only branch" : `Remove or delete ${b.businessName}`}
+                        className={`p-2 rounded-lg border transition-all text-xs flex items-center justify-center ${
+                          branches.length <= 1
+                            ? "bg-slate-50 text-slate-300 border-slate-200 cursor-not-allowed"
+                            : "bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border-slate-200 hover:border-rose-200 shadow-2xs"
+                        }`}
                       >
-                        {isSwitching ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
-                            <span>Switching...</span>
-                          </>
+                        {deletingBranchId === b.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-600" />
                         ) : (
-                          <>
-                            <span>Switch to This Branch</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </>
+                          <Trash2 className="h-3.5 w-3.5" />
                         )}
                       </button>
                     )}

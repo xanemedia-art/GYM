@@ -7,8 +7,10 @@ import { BirthdayWidget } from "@/components/dashboard/BirthdayWidget";
 import { UpcomingMonthCard } from "@/components/dashboard/UpcomingMonthCard";
 import { LiveAttendanceFeed } from "@/components/dashboard/LiveAttendanceFeed";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { PendingMembersSection } from "@/components/dashboard/PendingMembersSection";
 import { OnboardMemberModal } from "@/components/members/OnboardMemberModal";
 import { ManualCheckinModal } from "@/components/attendance/ManualCheckinModal";
+import { RenewMembershipModal } from "@/components/members/RenewMembershipModal";
 import { RefreshCw, Sparkles, QrCode } from "lucide-react";
 import Link from "next/link";
 
@@ -29,6 +31,12 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   const [loading, setLoading] = useState(true);
   const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
   const [isManualPunchModalOpen, setIsManualPunchModalOpen] = useState(false);
+  const [selectedMemberForActivation, setSelectedMemberForActivation] = useState<{
+    id: string;
+    fullName: string;
+    memberCode: string;
+    status: string;
+  } | null>(null);
 
   const fetchStats = async (fresh = false) => {
     try {
@@ -109,6 +117,12 @@ export default function DashboardClient({ user }: DashboardClientProps) {
           </div>
         )}
 
+        {/* Dedicated Pending Members Verification Section */}
+        <PendingMembersSection
+          pendingMembers={stats?.pendingMembers?.list || []}
+          onActivatePass={(member) => setSelectedMemberForActivation(member)}
+        />
+
         {/* Operational Feeds: Left = Attendance, Right = Birthdays & Tasks */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
@@ -140,6 +154,16 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         isOpen={isManualPunchModalOpen}
         onClose={() => setIsManualPunchModalOpen(false)}
         onSuccess={fetchStats}
+      />
+
+      <RenewMembershipModal
+        isOpen={!!selectedMemberForActivation}
+        member={selectedMemberForActivation}
+        onClose={() => setSelectedMemberForActivation(null)}
+        onSuccess={() => {
+          setSelectedMemberForActivation(null);
+          fetchStats(true);
+        }}
       />
     </AppLayout>
   );
