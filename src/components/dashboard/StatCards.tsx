@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Users, UserCheck, Fingerprint, Clock, AlertCircle } from "lucide-react";
+import { Users, UserCheck, Fingerprint, Clock, AlertCircle, TrendingUp } from "lucide-react";
 
 interface StatCardsProps {
   stats: {

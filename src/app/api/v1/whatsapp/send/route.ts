@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { sendCustomWhatsAppMessage } from "@/lib/notifications/whatsapp";
-import { runDailyNotificationScanner } from "@/lib/cron/scanner";
+import { runDailyMorningAutomation } from "@/lib/cron/scanner";
 
 const sendCustomSchema = z.object({
   recipientPhone: z.string().min(10, "Valid 10-digit mobile number required"),
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     // Check if on-demand batch dispatch was requested
     if (body.action === "dispatch_all_pending") {
-      const summary = await runDailyNotificationScanner();
+      const summary = await runDailyMorningAutomation();
       return apiSuccess({
         message: "Automated scan and dispatch completed",
         summary,
