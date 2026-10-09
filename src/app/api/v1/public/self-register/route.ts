@@ -5,6 +5,7 @@ import { verifyClientInviteToken } from "@/lib/invites";
 import { calculateGst, formatInvoiceNumber, getIndianFinancialYear, GYM_HSN_SAC_CODE } from "@/lib/gst";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 import { apiError, apiSuccess } from "@/lib/api-response";
+import { broadcastPushNotification } from "@/lib/push-notifications";
 import { GenderType, MemberStatus, InvoiceStatus } from "@prisma/client";
 
 const selfRegisterSchema = z.object({
@@ -245,6 +246,17 @@ export async function POST(req: NextRequest) {
 
       return { member, membership, invoice };
     });
+
+    // Trigger instant push alert to gym owner & staff devices
+    broadcastPushNotification({
+      tenantId,
+      payload: {
+        title: "New Member Joined! 🚀",
+        body: `${result.member.firstName} ${result.member.lastName} (${result.member.phone}) enrolled online via Gate QR!`,
+        url: "/members",
+        tag: `member-enrolled-${result.member.id}`,
+      },
+    }).catch((err) => console.error("[WebPush] Failed to broadcast new member push:", err));
 
     return apiSuccess(
       {

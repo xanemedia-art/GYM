@@ -242,13 +242,15 @@ export function AppLayout({ children, user }: AppLayoutProps) {
               <span>Biometric Gateway Online</span>
             </div>
 
-            <button
+            <Link
+              href="/settings"
               className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors active:scale-90"
-              aria-label="Notifications"
+              title="Push Notifications & Alert Settings"
+              aria-label="Push Notifications & Alert Settings"
             >
               <Bell className="h-4 w-4" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
-            </button>
+            </Link>
           </div>
         </header>
 

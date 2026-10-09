@@ -66,6 +66,7 @@ enum ChannelType {
   EMAIL
   IN_APP
   SMS
+  PUSH
 }
 
 enum MessageStatus {
@@ -112,6 +113,7 @@ model Tenant {
   communicationLogs CommunicationLog[]
   calendarEvents    CalendarEvent[]
   auditLogs         AuditLog[]
+  pushSubscriptions PushSubscription[]
 
   @@map("tenants")
 }
@@ -163,6 +165,7 @@ model User {
   processedRefunds        Refund[]               @relation("RefundProcessedByUser")
   verifiedAttendance      AttendanceRecord[]     @relation("AttendanceVerifiedByUser")
   auditLogs               AuditLog[]
+  pushSubscriptions       PushSubscription[]
 
   @@unique([tenantId, email], name: "uq_tenant_user_email")
   @@map("users")
@@ -204,6 +207,7 @@ model Member {
   deviceUsers       DeviceUser[]
   attendanceRecords AttendanceRecord[]
   communicationLogs CommunicationLog[]
+  pushSubscriptions PushSubscription[]
 
   @@unique([tenantId, memberCode], name: "uq_tenant_member_code")
   @@unique([tenantId, phone], name: "uq_tenant_member_phone")
@@ -543,4 +547,32 @@ model AuditLog {
   user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("audit_logs")
+}
+
+// --------------------------------------------------------
+// 9. Mobile & Browser Web Push Subscriptions
+// --------------------------------------------------------
+
+model PushSubscription {
+  id         String   @id @default(uuid())
+  tenantId   String?  @map("tenant_id")
+  userId     String?  @map("user_id")
+  memberId   String?  @map("member_id")
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?  @map("user_agent")
+  deviceType String?  @default("MOBILE") @map("device_type")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  member Member? @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([memberId])
+  @@map("push_subscriptions")
 }

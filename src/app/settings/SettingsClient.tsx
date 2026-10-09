@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { UpiStandeeCard } from "@/components/settings/UpiStandeeCard";
+import { PushNotificationSettingsCard } from "@/components/notifications/PushNotificationSettingsCard";
 import {
   Settings,
   Building2,
@@ -494,6 +495,9 @@ export default function SettingsClient({ user }: SettingsClientProps) {
               </div>
             </div>
           </div>
+
+          {/* 4. Native PWA & Mobile Web Push Notifications Engine */}
+          <PushNotificationSettingsCard />
 
           {/* Automation Rules */}
           <div className="rounded-2xl bg-white border border-slate-200/90 p-6 shadow-xs space-y-4">
