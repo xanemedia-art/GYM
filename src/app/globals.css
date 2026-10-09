@@ -103,8 +103,53 @@ body {
   box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.4);
 }
 
-/* Ensure hardware-accelerated native cursor and instant click responsiveness */
+/* Mobile App Optimization & Native Feel */
 html, body {
   cursor: auto;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+
+/* Prevent iOS Safari from auto-zooming on input focus (minimum 16px font-size on mobile) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe Area Inset Support for Notched Devices & Home Indicators */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+.safe-dock-pb {
+  padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+.safe-header-pt {
+  padding-top: calc(3.75rem + env(safe-area-inset-top, 0px));
+}
+
+/* Scrollable touch strip with hidden scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Prevent horizontal overflow on mobile screens */
+.app-container-mobile {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 

@@ -119,25 +119,25 @@ export function GymSwitcher({ currentTenant, userRole }: GymSwitcherProps) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 hover:border-emerald-300 hover:bg-emerald-50/40 text-slate-800 transition-all shadow-2xs group text-left"
+        className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 hover:border-emerald-300 hover:bg-emerald-50/40 text-slate-800 transition-all shadow-2xs group text-left max-w-full"
         title="Switch active gym location (Owner Only)"
       >
         <div className="h-6 w-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
           <Building2 className="h-3.5 w-3.5" />
         </div>
-        <div className="flex flex-col">
-          <span className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1">
-            {currentTenant?.businessName || "Select Gym"}
+        <div className="flex flex-col min-w-0">
+          <span className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1 truncate max-w-[95px] sm:max-w-[160px]">
+            <span className="truncate">{currentTenant?.businessName || "Select Gym"}</span>
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
           </span>
-          <span className="text-[10px] text-slate-500 font-medium">Owner Workspace</span>
+          <span className="text-[9px] sm:text-[10px] text-slate-500 font-medium truncate">Owner Workspace</span>
         </div>
-        <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-700 transition-transform ml-1" />
+        <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-700 transition-transform ml-0.5 shrink-0" />
       </button>
 
       {/* Dropdown Popover */}
       {open && (
-        <div className="absolute left-0 mt-2 w-72 md:w-80 rounded-2xl bg-white border border-slate-200 shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+        <div className="fixed sm:absolute left-2 right-2 sm:left-0 sm:right-auto top-16 sm:top-auto sm:mt-2 sm:w-80 rounded-2xl bg-white border border-slate-200 shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
           <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
             <div>
               <div className="text-xs font-bold text-slate-900">Gym Chain Network</div>

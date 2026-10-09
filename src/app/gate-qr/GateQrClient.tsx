@@ -146,26 +146,26 @@ export default function GateQrClient({ user, tenant }: GateQrClientProps) {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
             <button
               onClick={handleCopy}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all shadow-2xs flex items-center gap-1.5"
+              className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all shadow-2xs flex items-center justify-center gap-1.5 active:scale-95 min-h-[42px]"
             >
-              {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-500" />}
-              <span>{copied ? "Link Copied!" : "Copy Link"}</span>
+              {copied ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4 text-slate-500" />}
+              <span>{copied ? "Copied!" : "Copy Link"}</span>
             </button>
 
             <button
               onClick={handleDownload}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all shadow-2xs flex items-center gap-1.5"
+              className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all shadow-2xs flex items-center justify-center gap-1.5 active:scale-95 min-h-[42px]"
             >
-              <Download className="h-3.5 w-3.5 text-slate-500" />
+              <Download className="h-4 w-4 text-slate-500" />
               <span>Save PNG</span>
             </button>
 
             <button
               onClick={handlePrint}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 flex items-center gap-2 transition-all active:scale-95"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 min-h-[44px]"
             >
               <Printer className="h-4 w-4" />
               <span>Print A4 Poster</span>
@@ -174,7 +174,7 @@ export default function GateQrClient({ user, tenant }: GateQrClientProps) {
         </div>
 
         {/* Customization Bar (Non-printed) */}
-        <div className="no-print p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+        <div className="no-print p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
           <div>
             <label className="block text-[11px] font-bold text-slate-700 mb-1">Poster Headline</label>
             <input
@@ -200,23 +200,23 @@ export default function GateQrClient({ user, tenant }: GateQrClientProps) {
           <div
             id="printable-poster"
             ref={printAreaRef}
-            className="w-full max-w-[620px] bg-white rounded-3xl border-2 border-slate-200 shadow-xl p-8 sm:p-10 flex flex-col justify-between text-slate-900 text-center relative overflow-hidden"
+            className="w-full max-w-[620px] bg-white rounded-3xl border-2 border-slate-200 shadow-xl p-5 sm:p-10 flex flex-col justify-between text-slate-900 text-center relative overflow-hidden"
           >
             {/* Top Brand Banner */}
-            <div className="space-y-3 pb-6 border-b-2 border-slate-100">
+            <div className="space-y-3 pb-5 sm:pb-6 border-b-2 border-slate-100">
               <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-slate-50 border border-slate-200 mx-auto">
                 <Image
                   src="/bff-logo.png"
                   alt="Be Free Fitness"
                   width={180}
                   height={56}
-                  className="h-12 w-auto object-contain"
+                  className="h-10 sm:h-12 w-auto object-contain"
                   priority
                 />
               </div>
 
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase text-slate-900">
+                <h2 className="text-xl sm:text-3xl font-black tracking-tight uppercase text-slate-900">
                   {tenant.businessName}
                 </h2>
                 <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-700 mt-1">
@@ -229,11 +229,11 @@ export default function GateQrClient({ user, tenant }: GateQrClientProps) {
             </div>
 
             {/* Poster Headline */}
-            <div className="py-6 space-y-1.5">
-              <div className="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase tracking-wider mb-2">
+            <div className="py-4 sm:py-6 space-y-1.5">
+              <div className="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] sm:text-[11px] font-black uppercase tracking-wider mb-1 sm:mb-2">
                 Self-Registration Gate Pass
               </div>
-              <h3 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-950 uppercase leading-none">
+              <h3 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 uppercase leading-none">
                 {posterTitle}
               </h3>
               <p className="text-xs sm:text-sm font-semibold text-slate-500">
@@ -242,13 +242,13 @@ export default function GateQrClient({ user, tenant }: GateQrClientProps) {
             </div>
 
             {/* The QR Code Card */}
-            <div className="my-2 p-6 rounded-3xl bg-slate-50 border-2 border-slate-200/90 inline-block mx-auto shadow-inner">
+            <div className="my-2 p-4 sm:p-6 rounded-3xl bg-slate-50 border-2 border-slate-200/90 inline-block mx-auto shadow-inner">
               {qrDataUrl ? (
                 <div className="relative p-2 bg-white rounded-2xl shadow-md border border-slate-200">
                   <img
                     src={qrDataUrl}
                     alt="Entry Gate QR Code"
-                    className="w-56 h-56 sm:w-64 sm:h-64 object-contain mx-auto"
+                    className="w-48 h-48 sm:w-64 sm:h-64 object-contain mx-auto"
                   />
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="h-10 w-10 rounded-xl bg-white border-2 border-emerald-500 shadow-md flex items-center justify-center">
@@ -263,7 +263,7 @@ export default function GateQrClient({ user, tenant }: GateQrClientProps) {
                   </div>
                 </div>
               ) : (
-                <div className="w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center text-xs text-slate-400">
+                <div className="w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center text-xs text-slate-400">
                   Generating Gate QR...
                 </div>
               )}
@@ -274,9 +274,9 @@ export default function GateQrClient({ user, tenant }: GateQrClientProps) {
             </div>
 
             {/* 3 Step Walk-in Instructions */}
-            <div className="pt-6 grid grid-cols-3 gap-3 text-center border-t-2 border-slate-100">
+            <div className="pt-5 sm:pt-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-center border-t-2 border-slate-100">
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <div className="h-8 w-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-xs mx-auto">
+                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-xs mx-auto">
                   1
                 </div>
                 <div className="text-[11px] font-bold text-slate-900 leading-tight">Scan Gate QR</div>

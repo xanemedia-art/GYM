@@ -338,11 +338,11 @@ export default function WhatsAppClient({ user }: WhatsAppClientProps) {
             </div>
 
             {/* 1-Click Connect Button */}
-            <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={handleOneClickConnect}
                 disabled={togglingConnect || loadingConfig}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50 ${
+                className={`flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 min-h-[42px] ${
                   isConnected
                     ? "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
                     : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20"
@@ -357,7 +357,7 @@ export default function WhatsAppClient({ user }: WhatsAppClientProps) {
                 )}
                 <span>
                   {togglingConnect
-                    ? "Updating Connection..."
+                    ? "Updating..."
                     : isConnected
                     ? "Disconnect WhatsApp"
                     : "Connect WhatsApp (1-Click)"}
@@ -366,8 +366,9 @@ export default function WhatsAppClient({ user }: WhatsAppClientProps) {
 
               <button
                 onClick={() => setShowApiSettings(!showApiSettings)}
-                className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors"
+                className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors shrink-0 min-h-[42px] min-w-[42px] flex items-center justify-center active:scale-90"
                 title="Configure Meta Cloud API Credentials"
+                aria-label="Meta Cloud API Settings"
               >
                 <Settings2 className="h-4 w-4" />
               </button>
@@ -489,7 +490,7 @@ export default function WhatsAppClient({ user }: WhatsAppClientProps) {
               <button
                 onClick={handleDispatchAllPending}
                 disabled={dispatchingBatch}
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-xs flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 self-start sm:self-auto"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 min-h-[42px]"
               >
                 {dispatchingBatch ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -719,25 +720,25 @@ export default function WhatsAppClient({ user }: WhatsAppClientProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1">
-              {customForm.recipientPhone && (
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-2">
+              {customForm.recipientPhone ? (
                 <a
                   href={`https://wa.me/91${customForm.recipientPhone.replace(/\D/g, "").slice(-10)}?text=${encodeURIComponent(
                     customForm.message
                   )}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                  className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center justify-center sm:justify-start gap-1 py-1"
                 >
                   <span>Open directly in WhatsApp Web</span>
-                  <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="h-3.5 w-3.5" />
                 </a>
-              )}
+              ) : <div />}
 
               <button
                 type="submit"
                 disabled={sendingCustom || !customForm.recipientPhone || !customForm.message}
-                className="ml-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 min-h-[44px]"
               >
                 {sendingCustom ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 <span>Send via WhatsApp API</span>

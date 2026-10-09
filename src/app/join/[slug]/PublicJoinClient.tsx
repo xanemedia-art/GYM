@@ -470,19 +470,19 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
               </p>
             </div>
 
-            <div className="pt-2 flex items-center justify-between">
+            <div className="pt-3 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-2.5">
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                className="w-full sm:w-auto px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white text-center transition-colors"
               >
-                Back to Details
+                ← Back to Details
               </button>
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 min-h-[44px]"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 <span>{submitting ? "Submitting Registration..." : "Complete Gate Registration"}</span>

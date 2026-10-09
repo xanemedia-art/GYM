@@ -69,35 +69,41 @@ export function StatCards({ stats }: StatCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
           <div
             key={card.title}
-            className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/90 p-5 shadow-xs transition-all hover:shadow-md hover:border-slate-300 group flex flex-col justify-between"
+            className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/90 p-3.5 sm:p-5 shadow-2xs transition-all hover:shadow-md hover:border-slate-300 group flex flex-col justify-between"
           >
             {/* Top color indicator bar */}
             <div className={`absolute top-0 left-0 right-0 h-1 ${card.accentBar}`} />
 
             <div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{card.title}</span>
-                <div className={`h-9 w-9 rounded-xl border flex items-center justify-center ${card.iconBg}`}>
-                  <Icon className="h-4 w-4" />
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">
+                  {card.title}
+                </span>
+                <div className={`h-7 w-7 sm:h-9 sm:w-9 rounded-xl border flex items-center justify-center shrink-0 ${card.iconBg}`}>
+                  <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </div>
               </div>
 
-              <div className="mt-3">
-                <div className="text-2xl font-black tracking-tight text-slate-900">{card.value}</div>
-                <div className="mt-0.5 text-xs text-slate-500 font-medium">{card.subtitle}</div>
+              <div className="mt-2 sm:mt-3">
+                <div className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 font-mono">
+                  {card.value}
+                </div>
+                <div className="mt-0.5 text-[10px] sm:text-xs text-slate-500 font-medium truncate">
+                  {card.subtitle}
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${card.trendColor}`}>
-                <TrendingUp className="h-3 w-3" />
-                {card.trend}
+            <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-full ${card.trendColor}`}>
+                <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
+                <span className="truncate">{card.trend}</span>
               </span>
             </div>
           </div>

@@ -188,7 +188,7 @@ export async function DELETE(
       return apiError("Unauthorized", "UNAUTHORIZED", 401);
     }
 
-    if (!hasPermission(session.role, "FREEZE_CANCEL_MEMBERSHIP")) {
+    if (!hasPermission(session.role, "FREEZE_CANCEL_MEMBERSHIP") && !hasPermission(session.role, "MEMBER_ONBOARDING")) {
       return apiError("Insufficient permission to delete member", "FORBIDDEN", 403);
     }
 

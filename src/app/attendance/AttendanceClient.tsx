@@ -205,7 +205,7 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
     <AppLayout user={user}>
       <div className="space-y-6 max-w-6xl mx-auto">
         {/* Header & Live Status */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">
@@ -213,11 +213,11 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
               </h1>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-                Live Feed Active
+                Live Feed
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Unified attendance for {gymName}: Front-desk punch, client mobile self-punch & eSSL door lock
+              Front-desk check-in, client mobile punch & biometric door lock for {gymName}
             </p>
           </div>
 
@@ -228,7 +228,7 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
                 fetchRecentSwipes();
               }}
               title="Refresh attendance stream"
-              className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs"
+              className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs active:scale-90"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-emerald-600" : ""}`} />
             </button>
@@ -236,18 +236,18 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
             <Link
               href="/kiosk"
               target="_blank"
-              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-all"
+              className="hidden sm:flex px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs items-center gap-1.5 transition-all"
             >
               <Maximize2 className="h-4 w-4 text-slate-500" />
-              <span className="hidden sm:inline">Tablet Kiosk Mode</span>
+              <span>Tablet Kiosk Mode</span>
             </Link>
 
             <button
               onClick={() => setIsManualPunchOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/30 flex items-center gap-2 transition-all active:scale-95"
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all active:scale-95"
             >
               <Fingerprint className="h-4 w-4" />
-              <span>Full Manual Form</span>
+              <span>Manual Check-in</span>
             </button>
           </div>
         </div>
@@ -263,17 +263,17 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
                 Quick Reception Punch
               </h2>
             </div>
-            <span className="text-[11px] text-slate-400">Type member name, phone or code</span>
+            <span className="text-[11px] text-slate-400">Search member to punch</span>
           </div>
 
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search member to punch In / Out (e.g. Rahul, 9876543210, M-1001)..."
+              placeholder="Search member name, phone or code (e.g. Rahul, 9876543210)..."
               value={punchSearch}
               onChange={(e) => setPunchSearch(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-medium"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-emerald-500 focus:bg-white transition-all font-medium"
             />
             {isSearchingMembers && (
               <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600 animate-spin" />
@@ -286,7 +286,7 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
               {matchingMembers.map((m) => (
                 <div
                   key={m.id}
-                  className="p-3 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+                  className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-slate-50 transition-colors"
                 >
                   <div>
                     <div className="text-xs font-bold text-slate-900">
@@ -297,21 +297,21 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
                       disabled={punchingMemberId === m.id}
                       onClick={() => handleQuickPunch(m.id, "CHECK_IN", `${m.firstName} ${m.lastName}`)}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 shadow-2xs transition-all active:scale-95 disabled:opacity-50"
+                      className="flex-1 sm:flex-none h-9 px-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1 shadow-2xs transition-all active:scale-95 disabled:opacity-50"
                     >
-                      <Dumbbell className="h-3 w-3" />
+                      <Dumbbell className="h-3.5 w-3.5" />
                       <span>Punch In</span>
                     </button>
                     <button
                       disabled={punchingMemberId === m.id}
                       onClick={() => handleQuickPunch(m.id, "CHECK_OUT", `${m.firstName} ${m.lastName}`)}
-                      className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1 shadow-2xs transition-all active:scale-95 disabled:opacity-50"
+                      className="flex-1 sm:flex-none h-9 px-3.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-1 shadow-2xs transition-all active:scale-95 disabled:opacity-50"
                     >
-                      <LogOut className="h-3 w-3" />
+                      <LogOut className="h-3.5 w-3.5" />
                       <span>Punch Out</span>
                     </button>
                   </div>
@@ -479,52 +479,119 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
         </div>
 
         {/* 4. Headcount Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+          <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs relative overflow-hidden flex flex-col justify-between">
             <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Estimated On Floor</div>
-              <div className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/60">
-                <Users className="h-4 w-4" />
+            <div>
+              <div className="flex items-center justify-between gap-1">
+                <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">
+                  On Floor
+                </div>
+                <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/60 shrink-0">
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-3xl font-black text-emerald-600 mt-2 font-mono">
+                {data.estimatedActiveInside} <span className="text-xs sm:text-sm font-semibold">Members</span>
               </div>
             </div>
-            <div className="text-3xl font-black text-emerald-600 mt-2 font-mono">{data.estimatedActiveInside} Members</div>
-            <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-              <Activity className="h-3 w-3 text-emerald-500" />
-              <span>Active inside gym based on recent 90-minute window</span>
+            <div className="text-[10px] sm:text-xs text-slate-400 mt-2 flex items-center gap-1 truncate">
+              <Activity className="h-3 w-3 text-emerald-500 shrink-0" />
+              <span className="truncate">Active inside gym</span>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden">
+          <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs relative overflow-hidden flex flex-col justify-between">
             <div className="absolute top-0 left-0 right-0 h-1 bg-slate-300" />
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Punches Today</div>
-              <div className="h-9 w-9 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-200/60">
-                <UserCheck className="h-4 w-4" />
+            <div>
+              <div className="flex items-center justify-between gap-1">
+                <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">
+                  Today Punches
+                </div>
+                <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-200/60 shrink-0">
+                  <UserCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-3xl font-black text-slate-900 mt-2 font-mono">
+                {data.totalCheckIns} <span className="text-xs sm:text-sm font-semibold">Punches</span>
               </div>
             </div>
-            <div className="text-3xl font-black text-slate-900 mt-2 font-mono">{data.totalCheckIns} Punches</div>
-            <div className="text-xs text-slate-400 mt-1">
-              Includes eSSL door lock, mobile client self-punches & front desk
+            <div className="text-[10px] sm:text-xs text-slate-400 mt-2 truncate">
+              Door lock & mobile self-punches
             </div>
           </div>
         </div>
 
-        {/* 5. Today's Punch Stream Table */}
+        {/* 5. Today's Punch Stream */}
         <div className="rounded-2xl bg-white border border-slate-200/80 overflow-hidden shadow-xs">
-          <div className="px-5 py-4 border-b border-slate-200/80 flex items-center justify-between">
+          <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-200/80 flex items-center justify-between">
             <div>
-              <div className="text-sm font-bold text-slate-900">Today's Attendance Punch Stream</div>
-              <p className="text-[11px] text-slate-500">Live check-ins and check-outs across all channels</p>
+              <div className="text-xs sm:text-sm font-bold text-slate-900">Today&apos;s Attendance Stream</div>
+              <p className="text-[10px] sm:text-[11px] text-slate-500">Live check-ins across all channels</p>
             </div>
-            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+            <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
               {data.recentPunches?.length || 0} Events
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile Card Feed (md:hidden) */}
+          <div className="md:hidden divide-y divide-slate-100 p-3 space-y-2.5">
+            {data.recentPunches && data.recentPunches.length > 0 ? (
+              data.recentPunches.map((punch: any) => {
+                const mode = punch.verificationMode || "MANUAL";
+                let modeBadge = "Reception";
+                if (mode === "CLIENT_PORTAL") modeBadge = "📱 Mobile Self-Punch";
+                else if (mode === "ESSL_DOOR_LOCK" || punch.device) modeBadge = "🔒 eSSL Lock";
+                else if (mode === "FRONT_DESK_QUICK") modeBadge = "⚡ Reception Quick";
+
+                return (
+                  <div
+                    key={punch.id}
+                    className="p-3 rounded-xl bg-slate-50/70 border border-slate-100 flex items-center justify-between gap-2.5 text-xs"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 truncate">
+                          {punch.member?.firstName} {punch.member?.lastName}
+                        </span>
+                        <span className="font-mono text-[10px] text-slate-400 shrink-0">
+                          {punch.member?.memberCode}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                        <span className="font-mono text-emerald-700 font-bold">
+                          {formatTime(punch.punchTime)}
+                        </span>
+                        <span>•</span>
+                        <span className="truncate">{modeBadge}</span>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          punch.punchType === "CHECK_IN"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}
+                      >
+                        {punch.punchType === "CHECK_IN" ? "🟢 Check In" : "🟠 Check Out"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="py-6 text-center text-slate-400 text-xs">
+                No punches recorded yet today.
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table Feed (hidden md:block) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-600">
-              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] border-b border-slate-200/80">
+              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] border-b border-slate-200/80 font-bold">
                 <tr>
                   <th className="px-5 py-3.5 font-semibold">Time</th>
                   <th className="px-5 py-3.5 font-semibold">Member</th>

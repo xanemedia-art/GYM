@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,9 +12,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#0f172a",
+};
+
 export const metadata: Metadata = {
   title: "Be Free Fitness | Gym Management OS",
-  description: "All-in-one gym and fitness center management operating system",
+  description: "High-performance mobile gym management & gate operating system",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "GymOS",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: "/bff-icon.png",
     shortcut: "/bff-icon.png",

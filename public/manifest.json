@@ -1,0 +1,25 @@
+{
+  "name": "Gym Management OS",
+  "short_name": "GymOS",
+  "description": "High-Performance Mobile Gym Operations, Gate QR, and Member Management OS",
+  "start_url": "/portal",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/bff-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

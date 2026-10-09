@@ -52,6 +52,7 @@ export default function CalendarClient({ user }: CalendarClientProps) {
   const [events, setEvents] = useState<CalendarEventItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+  const [isDayPopupOpen, setIsDayPopupOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -370,66 +371,73 @@ export default function CalendarClient({ user }: CalendarClientProps) {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <div
             onClick={() => setFilterType(filterType === "BIRTHDAY" ? "ALL" : "BIRTHDAY")}
-            className={`bg-white border rounded-2xl p-4 shadow-sm flex items-center gap-4 relative overflow-hidden cursor-pointer transition-all hover:shadow-md ${
+            className={`bg-white border rounded-2xl p-2.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-1.5 sm:gap-4 relative overflow-hidden cursor-pointer transition-all hover:shadow-md active:scale-95 ${
               filterType === "BIRTHDAY" ? "border-pink-500 ring-2 ring-pink-500/20" : "border-slate-200/80"
             }`}
           >
             <div className="absolute top-0 left-0 right-0 h-1 bg-pink-500" />
-            <div className="h-12 w-12 rounded-xl bg-pink-50 border border-pink-200 flex items-center justify-center text-pink-600 shrink-0">
-              <Cake className="h-6 w-6" />
+            <div className="h-8 w-8 sm:h-12 sm:w-12 rounded-xl bg-pink-50 border border-pink-200 flex items-center justify-center text-pink-600 shrink-0">
+              <Cake className="h-4 w-4 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900 font-mono">{birthdayCount}</div>
-              <div className="text-xs text-slate-500 font-medium">
-                Member Birthdays in {format(currentDate, "MMM")}
+            <div className="min-w-0">
+              <div className="text-base sm:text-2xl font-black text-slate-900 font-mono leading-tight">
+                {birthdayCount}
+              </div>
+              <div className="text-[10px] sm:text-xs text-slate-500 font-medium truncate">
+                <span className="sm:hidden">Birthdays</span>
+                <span className="hidden sm:inline">Member Birthdays</span>
               </div>
             </div>
           </div>
 
           <div
             onClick={() => setFilterType(filterType === "EXPIRY" ? "ALL" : "EXPIRY")}
-            className={`bg-white border rounded-2xl p-4 shadow-sm flex items-center gap-4 relative overflow-hidden cursor-pointer transition-all hover:shadow-md ${
+            className={`bg-white border rounded-2xl p-2.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-1.5 sm:gap-4 relative overflow-hidden cursor-pointer transition-all hover:shadow-md active:scale-95 ${
               filterType === "EXPIRY" ? "border-amber-500 ring-2 ring-amber-500/20" : "border-slate-200/80"
             }`}
           >
             <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500" />
-            <div className="h-12 w-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
-              <Clock className="h-6 w-6" />
+            <div className="h-8 w-8 sm:h-12 sm:w-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+              <Clock className="h-4 w-4 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900 font-mono">{expiryCount}</div>
-              <div className="text-xs text-slate-500 font-medium">
-                Memberships Expiring in {format(currentDate, "MMM")}
+            <div className="min-w-0">
+              <div className="text-base sm:text-2xl font-black text-slate-900 font-mono leading-tight">
+                {expiryCount}
+              </div>
+              <div className="text-[10px] sm:text-xs text-slate-500 font-medium truncate">
+                <span className="sm:hidden">Expiries</span>
+                <span className="hidden sm:inline">Expiring Passes</span>
               </div>
             </div>
           </div>
 
           <div
             onClick={() => setFilterType(filterType === "OCCASION" ? "ALL" : "OCCASION")}
-            className={`bg-white border rounded-2xl p-4 shadow-sm flex items-center gap-4 relative overflow-hidden cursor-pointer transition-all hover:shadow-md ${
+            className={`bg-white border rounded-2xl p-2.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-1.5 sm:gap-4 relative overflow-hidden cursor-pointer transition-all hover:shadow-md active:scale-95 ${
               filterType === "OCCASION" ? "border-emerald-500 ring-2 ring-emerald-500/20" : "border-slate-200/80"
             }`}
           >
             <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
-            <div className="h-12 w-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
-              <Sparkles className="h-6 w-6" />
+            <div className="h-8 w-8 sm:h-12 sm:w-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+              <Sparkles className="h-4 w-4 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900 font-mono">{occasionCount}</div>
-              <div className="text-xs text-slate-500 font-medium">
-                Gym Events & Occasions
+            <div className="min-w-0">
+              <div className="text-base sm:text-2xl font-black text-slate-900 font-mono leading-tight">
+                {occasionCount}
+              </div>
+              <div className="text-[10px] sm:text-xs text-slate-500 font-medium truncate">
+                <span className="sm:hidden">Events</span>
+                <span className="hidden sm:inline">Gym Events</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main Grid & Details Sidebar */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Month Calendar Grid (3 cols) */}
-          <div className="lg:col-span-3 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-4">
+        {/* Month Calendar View (Full Width) */}
+        <div className="w-full bg-white border border-slate-200/80 rounded-2xl p-3.5 sm:p-5 shadow-sm space-y-4">
             {/* Month Nav Bar & Quick Switchers */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2.5">
@@ -532,208 +540,297 @@ export default function CalendarClient({ user }: CalendarClientProps) {
               </button>
             </div>
 
-            {/* Day of Week Headers */}
-            <div className="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-bold text-slate-400">
-              {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
-                <div key={d} className="py-1">
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            {/* Day Cells */}
-            <div className="grid grid-cols-7 gap-2">
-              {/* Empty leading offset cells */}
-              {Array.from({ length: startDayOffset }).map((_, i) => (
-                <div
-                  key={`offset-${i}`}
-                  className="min-h-[90px] rounded-xl border border-dashed border-slate-200 bg-slate-50/40"
-                />
-              ))}
-
-              {/* Day cells */}
-              {daysInMonth.map((day) => {
-                const dayStr = format(day, "yyyy-MM-dd");
-                const allDayEvents = events.filter((e) => e.eventDate === dayStr);
-                const dayEvents = allDayEvents.filter((e) => {
-                  if (filterType === "ALL") return true;
-                  if (filterType === "EXPIRY") return e.eventType === "EXPIRY";
-                  if (filterType === "BIRTHDAY") return e.eventType === "BIRTHDAY";
-                  if (filterType === "OCCASION") return !["EXPIRY", "BIRTHDAY"].includes(e.eventType);
-                  return true;
-                });
-                const isSelected = isSameDay(day, selectedDay);
-                const isToday = isSameDay(day, new Date());
-                const hasExpiry = allDayEvents.some((e) => e.eventType === "EXPIRY");
-                const hasBirthday = allDayEvents.some((e) => e.eventType === "BIRTHDAY");
-
-                return (
-                  <div
-                    key={dayStr}
-                    onClick={() => setSelectedDay(day)}
-                    className={`min-h-[90px] p-2 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between relative ${
-                      isSelected
-                        ? "border-emerald-500 bg-emerald-50/40 shadow-xs ring-1 ring-emerald-500"
-                        : "border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/60"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center ${
-                          isToday
-                            ? "bg-emerald-600 text-white shadow-2xs font-black"
-                            : isSelected
-                            ? "text-emerald-700 bg-emerald-100 font-black"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        {format(day, "d")}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {hasExpiry && (
-                          <span
-                            className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-100"
-                            title="Membership Expiry on this day"
-                          />
-                        )}
-                        {hasBirthday && (
-                          <span
-                            className="h-2 w-2 rounded-full bg-pink-500 ring-2 ring-pink-100"
-                            title="Member Birthday on this day"
-                          />
-                        )}
-                        {dayEvents.length > 0 && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 font-mono font-semibold">
-                            {dayEvents.length}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Mini event tags */}
-                    <div className="mt-1.5 space-y-1 overflow-hidden">
-                      {dayEvents.slice(0, 2).map((ev) => {
-                        const badge = getEventBadge(ev.eventType);
-                        return (
-                          <div
-                            key={ev.id}
-                            className={`text-[10px] px-1.5 py-0.5 rounded-md truncate border font-medium ${badge.bg}`}
-                          >
-                            {ev.title}
-                          </div>
-                        );
-                      })}
-                      {dayEvents.length > 2 && (
-                        <div className="text-[9px] text-slate-400 text-right font-medium">
-                          +{dayEvents.length - 2} more
-                        </div>
-                      )}
-                    </div>
+            {/* Mobile Calendar Grid (md:hidden) */}
+            <div className="md:hidden">
+              <div className="grid grid-cols-7 gap-1 mb-1.5 text-center text-[10px] font-bold text-slate-400">
+                {["S", "M", "T", "W", "T", "F", "S"].map((d, idx) => (
+                  <div key={idx} className="py-1">
+                    {d}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Selected Day Details Panel (1 col) */}
-          <div className="lg:col-span-1 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm flex flex-col h-full">
-            <div className="border-b border-slate-100 pb-4 mb-4">
-              <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
-                Selected Day
+                ))}
               </div>
-              <h3 className="text-base font-bold text-slate-900 mt-1">
-                {format(selectedDay, "EEEE, MMMM d, yyyy")}
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {selectedDayEvents.length} scheduled item{selectedDayEvents.length === 1 ? "" : "s"}
-              </p>
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: startDayOffset }).map((_, i) => (
+                  <div key={`mob-offset-${i}`} className="h-11 rounded-xl bg-slate-50/40" />
+                ))}
+                {daysInMonth.map((day) => {
+                  const dayStr = format(day, "yyyy-MM-dd");
+                  const allDayEvents = events.filter((e) => e.eventDate === dayStr);
+                  const isSelected = isSameDay(day, selectedDay);
+                  const isToday = isSameDay(day, new Date());
+                  const hasExpiry = allDayEvents.some((e) => e.eventType === "EXPIRY");
+                  const hasBirthday = allDayEvents.some((e) => e.eventType === "BIRTHDAY");
+                  const hasOccasion = allDayEvents.some((e) => !["EXPIRY", "BIRTHDAY"].includes(e.eventType));
+
+                  return (
+                    <button
+                      key={`mob-${dayStr}`}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDay(day);
+                        setIsDayPopupOpen(true);
+                      }}
+                      className={`h-11 rounded-xl flex flex-col items-center justify-center relative transition-all active:scale-95 ${
+                        isSelected
+                          ? "bg-slate-900 text-white font-black shadow-xs ring-2 ring-emerald-500"
+                          : isToday
+                          ? "bg-emerald-50 text-emerald-800 font-bold border border-emerald-200"
+                          : "bg-white text-slate-800 border border-slate-100 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="text-xs leading-none">{format(day, "d")}</span>
+                      <div className="flex items-center gap-0.5 mt-1 h-1.5">
+                        {hasBirthday && <span className="h-1.5 w-1.5 rounded-full bg-pink-500" />}
+                        {hasExpiry && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />}
+                        {hasOccasion && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* List of events on this day */}
-            <div className="flex-1 space-y-3 overflow-y-auto">
-              {selectedDayEvents.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 text-xs">
-                  <Sparkles className="h-8 w-8 mx-auto text-slate-300 mb-2 opacity-70" />
-                  No events or birthdays matching filter for this date.
-                </div>
-              ) : (
-                selectedDayEvents.map((ev) => {
-                  const badge = getEventBadge(ev.eventType);
-                  const Icon = badge.icon;
-                  const isCustom = !ev.id.startsWith("bday-") && !ev.id.startsWith("exp-");
+            {/* Desktop Calendar Grid (hidden md:block) */}
+            <div className="hidden md:block">
+              {/* Day of Week Headers */}
+              <div className="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-bold text-slate-400">
+                {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
+                  <div key={d} className="py-1">
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {/* Day Cells */}
+              <div className="grid grid-cols-7 gap-2">
+                {/* Empty leading offset cells */}
+                {Array.from({ length: startDayOffset }).map((_, i) => (
+                  <div
+                    key={`offset-${i}`}
+                    className="min-h-[90px] rounded-xl border border-dashed border-slate-200 bg-slate-50/40"
+                  />
+                ))}
+
+                {/* Day cells */}
+                {daysInMonth.map((day) => {
+                  const dayStr = format(day, "yyyy-MM-dd");
+                  const allDayEvents = events.filter((e) => e.eventDate === dayStr);
+                  const dayEvents = allDayEvents.filter((e) => {
+                    if (filterType === "ALL") return true;
+                    if (filterType === "EXPIRY") return e.eventType === "EXPIRY";
+                    if (filterType === "BIRTHDAY") return e.eventType === "BIRTHDAY";
+                    if (filterType === "OCCASION") return !["EXPIRY", "BIRTHDAY"].includes(e.eventType);
+                    return true;
+                  });
+                  const isSelected = isSameDay(day, selectedDay);
+                  const isToday = isSameDay(day, new Date());
+                  const hasExpiry = allDayEvents.some((e) => e.eventType === "EXPIRY");
+                  const hasBirthday = allDayEvents.some((e) => e.eventType === "BIRTHDAY");
 
                   return (
                     <div
-                      key={ev.id}
-                      className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 space-y-2 relative group"
+                      key={dayStr}
+                      onClick={() => {
+                        setSelectedDay(day);
+                        setIsDayPopupOpen(true);
+                      }}
+                      className={`min-h-[90px] p-2 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between relative ${
+                        isSelected
+                          ? "border-emerald-500 bg-emerald-50/40 shadow-xs ring-1 ring-emerald-500"
+                          : "border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/60"
+                      }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className={`p-1 rounded-md border text-xs ${badge.bg}`}>
-                          <Icon className="h-3.5 w-3.5" />
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center ${
+                            isToday
+                              ? "bg-emerald-600 text-white shadow-2xs font-black"
+                              : isSelected
+                              ? "text-emerald-700 bg-emerald-100 font-black"
+                              : "text-slate-700"
+                          }`}
+                        >
+                          {format(day, "d")}
                         </span>
-                        <div className="text-xs font-bold text-slate-900 truncate flex-1">
-                          {ev.title}
+                        <div className="flex items-center gap-1">
+                          {hasExpiry && (
+                            <span
+                              className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-100"
+                              title="Membership Expiry on this day"
+                            />
+                          )}
+                          {hasBirthday && (
+                            <span
+                              className="h-2 w-2 rounded-full bg-pink-500 ring-2 ring-pink-100"
+                              title="Member Birthday on this day"
+                            />
+                          )}
+                          {dayEvents.length > 0 && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 font-mono font-semibold">
+                              {dayEvents.length}
+                            </span>
+                          )}
                         </div>
-                        {isCustom && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteEvent(ev.id)}
-                            className="text-slate-400 hover:text-rose-600 p-1 rounded-md hover:bg-white transition-colors"
-                            title="Delete Occasion"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
                       </div>
 
-                      {ev.description && (
-                        <p className="text-[11px] text-slate-500 line-clamp-2">
-                          {ev.description}
-                        </p>
-                      )}
-
-                      {/* Action buttons for birthdays / reminders */}
-                      {ev.phone && (
-                        <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60">
-                          <button
-                            type="button"
-                            onClick={() => handleSendWhatsApp(ev)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold transition-all active:scale-95 shadow-xs"
-                          >
-                            <Send className="h-3 w-3" />
-                            {ev.eventType === "EXPIRY"
-                              ? "WhatsApp Reminder"
-                              : ev.eventType === "BIRTHDAY"
-                              ? "Wish Birthday"
-                              : "WhatsApp"}
-                          </button>
-                          <a
-                            href={`tel:${ev.phone}`}
-                            className="flex items-center justify-center p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] transition-colors border border-slate-200"
-                            title="Call Phone"
-                          >
-                            <Phone className="h-3 w-3" />
-                          </a>
-                        </div>
-                      )}
+                      {/* Mini event tags */}
+                      <div className="mt-1.5 space-y-1 overflow-hidden">
+                        {dayEvents.slice(0, 2).map((ev) => {
+                          const badge = getEventBadge(ev.eventType);
+                          return (
+                            <div
+                              key={ev.id}
+                              className={`text-[10px] px-1.5 py-0.5 rounded-md truncate border font-medium ${badge.bg}`}
+                            >
+                              {ev.title}
+                            </div>
+                          );
+                        })}
+                        {dayEvents.length > 2 && (
+                          <div className="text-[9px] text-slate-400 text-right font-medium">
+                            +{dayEvents.length - 2} more
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
-                })
-              )}
+                })}
+              </div>
             </div>
-
-            <button
-              onClick={() => {
-                setEventDate(format(selectedDay, "yyyy-MM-dd"));
-                setIsModalOpen(true);
-              }}
-              className="mt-4 w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold py-2.5 rounded-xl border border-slate-200 transition-colors"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Event on this Date
-            </button>
           </div>
-        </div>
+
+        {/* Selected Day Details Pop-up Modal */}
+        {isDayPopupOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[88vh]">
+              {/* Pop-up Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                <div>
+                  <div className="text-[10px] sm:text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                    Selected Date Details
+                  </div>
+                  <h3 className="text-sm sm:text-base font-black text-slate-900 mt-0.5">
+                    {format(selectedDay, "EEEE, MMMM d, yyyy")}
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    {selectedDayEvents.length} scheduled item{selectedDayEvents.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDayPopupOpen(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                  title="Close Pop-up"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Pop-up Body - Scrollable */}
+              <div className="p-4 sm:p-5 flex-1 overflow-y-auto space-y-3">
+                {selectedDayEvents.length === 0 ? (
+                  <div className="text-center py-10 px-4 text-slate-400">
+                    <div className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-300">
+                      <CalendarIcon className="h-6 w-6 text-slate-400" />
+                    </div>
+                    <div className="text-xs font-bold text-slate-700">No scheduled items on this date</div>
+                    <p className="text-[11px] text-slate-400 mt-1 max-w-xs mx-auto">
+                      There are no birthdays, expiring passes, or gym occasions scheduled for {format(selectedDay, "MMM d, yyyy")}.
+                    </p>
+                  </div>
+                ) : (
+                  selectedDayEvents.map((ev) => {
+                    const badge = getEventBadge(ev.eventType);
+                    const Icon = badge.icon;
+                    const isCustom = !ev.id.startsWith("bday-") && !ev.id.startsWith("exp-");
+
+                    return (
+                      <div
+                        key={ev.id}
+                        className="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/70 space-y-2 relative group hover:border-slate-300 transition-all"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className={`p-1.5 rounded-lg border text-xs shrink-0 ${badge.bg}`}>
+                            <Icon className="h-3.5 w-3.5" />
+                          </span>
+                          <div className="text-xs font-bold text-slate-900 truncate flex-1">
+                            {ev.title}
+                          </div>
+                          {isCustom && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteEvent(ev.id)}
+                              className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
+                              title="Delete Occasion"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        {ev.description && (
+                          <p className="text-[11px] text-slate-600 pl-1 border-l-2 border-slate-200">
+                            {ev.description}
+                          </p>
+                        )}
+
+                        {/* Action buttons for birthdays / reminders */}
+                        {ev.phone && (
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60">
+                            <button
+                              type="button"
+                              onClick={() => handleSendWhatsApp(ev)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all active:scale-95 shadow-2xs"
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                              <span>
+                                {ev.eventType === "EXPIRY"
+                                  ? "WhatsApp Reminder"
+                                  : ev.eventType === "BIRTHDAY"
+                                  ? "Wish Birthday"
+                                  : "WhatsApp Message"}
+                              </span>
+                            </button>
+                            <a
+                              href={`tel:${ev.phone}`}
+                              className="flex items-center justify-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition-colors border border-slate-200"
+                              title="Call Phone"
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Pop-up Footer */}
+              <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDayPopupOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEventDate(format(selectedDay, "yyyy-MM-dd"));
+                    setIsDayPopupOpen(false);
+                    setIsModalOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all active:scale-95"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Add Event on this Date</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Schedule Event Modal */}
         {isModalOpen && (
