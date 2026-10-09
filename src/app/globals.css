@@ -130,7 +130,7 @@ html, body {
 }
 
 .safe-dock-pb {
-  padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
 
 .safe-header-pt {
