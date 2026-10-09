@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getCachedTenant } from "@/lib/tenant-cache";
 import WhatsAppClient from "./WhatsAppClient";
 import { Metadata } from "next";
 
@@ -16,15 +16,7 @@ export default async function WhatsAppPage() {
     redirect("/login");
   }
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: session.tenantId },
-    select: {
-      id: true,
-      businessName: true,
-      slug: true,
-      phone: true,
-    },
-  });
+  const tenant = await getCachedTenant(session.tenantId);
 
   return (
     <WhatsAppClient
@@ -36,7 +28,7 @@ export default async function WhatsAppPage() {
           ? {
               businessName: tenant.businessName,
               slug: tenant.slug,
-              phone: tenant.phone,
+              phone: tenant.phone || "",
             }
           : undefined,
       }}

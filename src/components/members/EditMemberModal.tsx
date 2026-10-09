@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { User, X, AlertCircle, Loader2, Save, HeartHandshake, Fingerprint, Sparkles } from "lucide-react";
+import { AvatarUploader } from "@/components/common/AvatarUploader";
 
 interface EditMemberModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export function EditMemberModal({
     status: member?.status || "ACTIVE",
     notes: member?.notes || "",
     doorLockUid: member?.customFields?.doorLockUid || "",
+    photoUrl: member?.photoUrl || "",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -82,6 +84,7 @@ export function EditMemberModal({
           status: formData.status,
           notes: formData.notes || null,
           doorLockUid: formData.doorLockUid ? formData.doorLockUid.trim() : null,
+          photoUrl: formData.photoUrl || null,
         }),
       });
 
@@ -129,6 +132,17 @@ export function EditMemberModal({
               <span>{error}</span>
             </div>
           )}
+
+          {/* Member Profile Photo */}
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
+            <AvatarUploader
+              value={formData.photoUrl}
+              onChange={(url) => setFormData((prev) => ({ ...prev, photoUrl: url || "" }))}
+              label="Member Profile Photo"
+              description="Capture via webcam or upload an updated photo."
+              required={false}
+            />
+          </div>
 
           {/* Name fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

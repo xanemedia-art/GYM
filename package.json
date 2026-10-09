@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test tests/unit/core.test.ts",
+    "test": "tsx --test tests/unit/core.test.ts tests/unit/avatar.test.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

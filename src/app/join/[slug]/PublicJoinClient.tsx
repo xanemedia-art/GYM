@@ -18,6 +18,7 @@ import {
   Building2,
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
+import { AvatarUploader } from "@/components/common/AvatarUploader";
 
 interface Plan {
   id: string;
@@ -66,6 +67,7 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
     emergencyContactName: "",
     emergencyContactPhone: "",
     planId: plans.length > 0 ? plans[0].id : "",
+    photoUrl: "",
   });
 
   const city = tenant.address?.city || tenant.address?.area || "India";
@@ -120,6 +122,7 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
           emergencyContactName: formData.emergencyContactName || undefined,
           emergencyContactPhone: formData.emergencyContactPhone || undefined,
           planId: formData.planId || undefined,
+          photoUrl: formData.photoUrl || undefined,
         }),
       });
 
@@ -225,6 +228,18 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
                 <h2 className="text-sm font-bold text-white">1. Member Information</h2>
                 <p className="text-[11px] text-slate-400">Enter your details to create your gym profile</p>
               </div>
+            </div>
+
+            {/* Profile Photo Upload / Selfie Capture */}
+            <div className="bg-slate-800/60 border border-white/10 rounded-2xl p-3.5 sm:p-4">
+              <AvatarUploader
+                value={formData.photoUrl}
+                onChange={(url) => setFormData((prev) => ({ ...prev, photoUrl: url || "" }))}
+                tenantId={tenant.id}
+                label="Profile Picture (Face Verification)"
+                description="Snap a selfie now for faster check-in! (Optional: staff can also snap it at the counter)"
+                required={false}
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -506,6 +521,17 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
               <p className="text-xs text-slate-300 mt-1 max-w-md mx-auto">
                 Your profile has been saved at <strong>{tenant.businessName}</strong>.
               </p>
+
+              {result.photoUrl ? (
+                <div className="relative mx-auto h-24 w-24 rounded-2xl overflow-hidden border-2 border-emerald-400 shadow-lg mt-3">
+                  <img src={result.photoUrl} alt={result.fullName} className="h-full w-full object-cover" />
+                  <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-slate-900" />
+                </div>
+              ) : (
+                <div className="text-[11px] text-amber-300/90 bg-amber-950/50 border border-amber-800/60 rounded-xl p-2.5 mt-3 max-w-sm mx-auto text-center">
+                  📸 Photo Pending: Front desk staff will take your verification snapshot when collecting membership fees.
+                </div>
+              )}
             </div>
 
             <div className="max-w-md mx-auto rounded-2xl bg-slate-800/90 border border-white/10 p-5 text-left space-y-3 text-xs">

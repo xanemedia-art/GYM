@@ -21,6 +21,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { getClientCache, setClientCache } from "@/lib/client-cache";
 
 interface MembersClientProps {
   user: {
@@ -35,10 +36,11 @@ interface MembersClientProps {
 }
 
 export default function MembersClient({ user }: MembersClientProps) {
-  const [members, setMembers] = useState<any[]>([]);
+  const cachedMembers = getClientCache<any[]>("members_list_all");
+  const [members, setMembers] = useState<any[]>(() => cachedMembers || []);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedMembers);
   const [isOnboardOpen, setIsOnboardOpen] = useState(false);
   const [selectedMemberForRenew, setSelectedMemberForRenew] = useState<any | null>(null);
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
@@ -79,6 +81,9 @@ export default function MembersClient({ user }: MembersClientProps) {
       const json = await res.json();
       if (json.success && json.data) {
         setMembers(json.data);
+        if (!search && !statusFilter) {
+          setClientCache("members_list_all", json.data);
+        }
       }
     } catch (err) {
       console.error("Failed to load members:", err);
@@ -204,9 +209,19 @@ export default function MembersClient({ user }: MembersClientProps) {
                   {/* Card Header: Avatar + Name + Status */}
                   <div className="flex items-start justify-between gap-3">
                     <Link href={`/members/${member.id}`} className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="h-10 w-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center font-black text-sm text-emerald-800 shrink-0">
-                        {member.firstName.charAt(0)}
-                      </div>
+                      {member.photoUrl ? (
+                        <div className="h-10 w-10 rounded-xl overflow-hidden border border-emerald-300 shadow-2xs shrink-0 bg-white">
+                          <img
+                            src={member.photoUrl}
+                            alt={`${member.firstName} ${member.lastName}`}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-10 w-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center font-black text-sm text-emerald-800 shrink-0">
+                          {member.firstName.charAt(0)}
+                        </div>
+                      )}
                       <div className="min-w-0">
                         <div className="font-bold text-sm text-slate-900 flex items-center gap-1 truncate">
                           <span className="truncate">{member.firstName} {member.lastName}</span>
@@ -367,9 +382,19 @@ export default function MembersClient({ user }: MembersClientProps) {
                       <tr key={member.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="px-5 py-3.5">
                           <Link href={`/members/${member.id}`} className="flex items-center gap-3 group">
-                            <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center font-black text-xs text-emerald-800 shrink-0">
-                              {member.firstName.charAt(0)}
-                            </div>
+                            {member.photoUrl ? (
+                              <div className="h-9 w-9 rounded-xl overflow-hidden border border-emerald-300 shadow-2xs shrink-0 bg-white">
+                                <img
+                                  src={member.photoUrl}
+                                  alt={`${member.firstName} ${member.lastName}`}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center font-black text-xs text-emerald-800 shrink-0">
+                                {member.firstName.charAt(0)}
+                              </div>
+                            )}
                             <div>
                               <div className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1">
                                 {member.firstName} {member.lastName}

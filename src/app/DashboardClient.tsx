@@ -13,6 +13,7 @@ import { ManualCheckinModal } from "@/components/attendance/ManualCheckinModal";
 import { RenewMembershipModal } from "@/components/members/RenewMembershipModal";
 import { RefreshCw, Sparkles, QrCode } from "lucide-react";
 import Link from "next/link";
+import { getClientCache, setClientCache } from "@/lib/client-cache";
 
 interface DashboardClientProps {
   user: {
@@ -27,8 +28,9 @@ interface DashboardClientProps {
 }
 
 export default function DashboardClient({ user }: DashboardClientProps) {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const cachedStats = getClientCache<any>("dashboard_stats");
+  const [stats, setStats] = useState<any>(() => cachedStats || null);
+  const [loading, setLoading] = useState(!cachedStats);
   const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
   const [isManualPunchModalOpen, setIsManualPunchModalOpen] = useState(false);
   const [selectedMemberForActivation, setSelectedMemberForActivation] = useState<{
@@ -45,6 +47,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
       const json = await res.json();
       if (json.success && json.data) {
         setStats(json.data);
+        setClientCache("dashboard_stats", json.data);
       }
     } catch (err) {
       console.error("Failed to load dashboard metrics:", err);

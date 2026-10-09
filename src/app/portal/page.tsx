@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getCachedTenant } from "@/lib/tenant-cache";
 import DashboardClient from "../DashboardClient";
 import { Metadata } from "next";
 
@@ -16,16 +16,8 @@ export default async function PortalDashboardPage() {
     redirect("/login");
   }
 
-  // Fetch initial dashboard stats server-side
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: session.tenantId },
-    select: {
-      businessName: true,
-      slug: true,
-      currency: true,
-      settings: true,
-    },
-  });
+  // Fetch cached tenant metadata (0ms in-memory lookup)
+  const tenant = await getCachedTenant(session.tenantId);
 
   return (
     <DashboardClient

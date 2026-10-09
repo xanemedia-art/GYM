@@ -148,9 +148,19 @@ export default function MemberDetailClient({ memberId, user }: MemberDetailClien
         <div className="rounded-2xl bg-white border border-slate-200/90 p-6 shadow-xs">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-emerald-100 border border-emerald-200 text-emerald-800 font-black text-2xl flex items-center justify-center shrink-0">
-                {member.firstName.charAt(0)}
-              </div>
+              {member.photoUrl ? (
+                <div className="relative h-16 w-16 rounded-2xl overflow-hidden border-2 border-emerald-300 shadow-sm shrink-0 bg-slate-100">
+                  <img
+                    src={member.photoUrl}
+                    alt={`${member.firstName} ${member.lastName}`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="h-16 w-16 rounded-2xl bg-emerald-100 border border-emerald-200 text-emerald-800 font-black text-2xl flex items-center justify-center shrink-0">
+                  {member.firstName.charAt(0)}
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-2.5">
                   <h1 className="text-xl font-bold text-slate-900">

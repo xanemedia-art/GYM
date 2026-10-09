@@ -58,9 +58,19 @@ export function LiveAttendanceFeed({ records, onManualPunchClick }: LiveAttendan
                 className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100/70 hover:border-slate-300 transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center font-black text-xs text-emerald-800 shrink-0">
-                    {record.member.firstName.charAt(0)}
-                  </div>
+                  {record.member.photoUrl ? (
+                    <div className="h-9 w-9 rounded-lg overflow-hidden border border-emerald-300 shadow-2xs shrink-0 bg-white">
+                      <img
+                        src={record.member.photoUrl}
+                        alt={`${record.member.firstName} ${record.member.lastName}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-9 w-9 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center font-black text-xs text-emerald-800 shrink-0">
+                      {record.member.firstName.charAt(0)}
+                    </div>
+                  )}
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-900">

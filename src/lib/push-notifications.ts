@@ -97,6 +97,11 @@ export async function sendPushNotification(
     const result = await webpush.sendNotification(pushSubscription, payloadString, {
       TTL: 60 * 60 * 24, // 24 hours
       urgency: "high",
+      headers: {
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "apns-topic": "in.befreefitness.app",
+      },
     });
 
     return {
@@ -145,34 +150,44 @@ export async function sendPushNotification(
 }
 
 /**
- * Broadcasts a push notification to all active devices in a gym tenant.
- * Can filter by tenantId and targetUserIds.
+ * Broadcasts a push notification to active devices in a gym tenant.
+ * Also alerts GYM_OWNER and SUPER_ADMIN devices across the gym network.
  */
 export async function broadcastPushNotification({
   tenantId,
   targetUserIds,
+  includeAdmins = true,
   payload,
 }: {
   tenantId?: string;
   targetUserIds?: string[];
+  includeAdmins?: boolean;
   payload: PushNotificationPayload;
 }): Promise<{ total: number; sent: number; failed: number }> {
   ensureVapidConfigured();
 
-  const whereClause: any = {
-    isActive: true,
-  };
+  const whereConditions: any[] = [{ isActive: true }];
 
-  if (tenantId) {
-    whereClause.tenantId = tenantId;
+  if (tenantId && includeAdmins) {
+    whereConditions.push({
+      OR: [
+        { tenantId },
+        { user: { role: { in: ["SUPER_ADMIN", "GYM_OWNER"] } } },
+        { tenantId: null },
+      ],
+    });
+  } else if (tenantId) {
+    whereConditions.push({ tenantId });
   }
 
   if (targetUserIds && targetUserIds.length > 0) {
-    whereClause.userId = { in: targetUserIds };
+    whereConditions.push({ userId: { in: targetUserIds } });
   }
 
   const subscriptions = await prisma.pushSubscription.findMany({
-    where: whereClause,
+    where: {
+      AND: whereConditions,
+    },
   });
 
   if (subscriptions.length === 0) {

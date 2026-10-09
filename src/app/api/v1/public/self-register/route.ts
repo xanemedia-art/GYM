@@ -22,6 +22,7 @@ const selfRegisterSchema = z.object({
   emergencyContactPhone: z.string().optional(),
   planId: z.string().uuid("Valid plan ID required"),
   notes: z.string().optional(),
+  photoUrl: z.string().optional().nullable().or(z.literal("")),
 });
 
 export async function GET(req: NextRequest) {
@@ -118,6 +119,7 @@ export async function POST(req: NextRequest) {
       emergencyContactPhone,
       planId,
       notes,
+      photoUrl,
     } = parsed.data;
 
     // Verify token
@@ -217,6 +219,7 @@ export async function POST(req: NextRequest) {
           dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
           emergencyContactName: emergencyContactName || null,
           emergencyContactPhone: emergencyContactPhone || null,
+          photoUrl: photoUrl || null,
           status: MemberStatus.ACTIVE,
           notes: notes ? `Self-Registered online. Notes: ${notes}` : "Self-Registered online via client portal.",
         },

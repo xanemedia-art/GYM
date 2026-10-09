@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getCachedTenant } from "@/lib/tenant-cache";
 import MembersClient from "./MembersClient";
 
 export default async function MembersPage() {
@@ -9,10 +9,7 @@ export default async function MembersPage() {
     redirect("/login");
   }
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: session.tenantId },
-    select: { businessName: true, slug: true },
-  });
+  const tenant = await getCachedTenant(session.tenantId);
 
   return (
     <MembersClient

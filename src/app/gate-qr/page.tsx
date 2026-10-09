@@ -2,7 +2,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getCachedTenant } from "@/lib/tenant-cache";
 import GateQrClient from "./GateQrClient";
 
 export const metadata: Metadata = {
@@ -17,17 +17,7 @@ export default async function GateQrPage() {
     redirect("/login");
   }
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: session.tenantId },
-    select: {
-      id: true,
-      businessName: true,
-      slug: true,
-      phone: true,
-      email: true,
-      address: true,
-    },
-  });
+  const tenant = await getCachedTenant(session.tenantId);
 
   if (!tenant) {
     redirect("/login");
@@ -48,8 +38,8 @@ export default async function GateQrPage() {
         id: tenant.id,
         businessName: tenant.businessName,
         slug: tenant.slug,
-        phone: tenant.phone,
-        email: tenant.email,
+        phone: tenant.phone || "",
+        email: tenant.email || "",
         address: tenant.address as any,
       }}
     />

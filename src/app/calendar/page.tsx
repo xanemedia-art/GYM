@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getCachedTenant } from "@/lib/tenant-cache";
 import CalendarClient from "./CalendarClient";
 
 export default async function CalendarPage() {
@@ -10,10 +10,7 @@ export default async function CalendarPage() {
     redirect("/login");
   }
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: session.tenantId },
-    select: { businessName: true, slug: true },
-  });
+  const tenant = await getCachedTenant(session.tenantId);
 
   return (
     <Suspense fallback={<div className="p-8 text-center text-slate-400">Loading calendar...</div>}>

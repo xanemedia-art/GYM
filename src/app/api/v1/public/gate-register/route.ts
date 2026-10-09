@@ -5,6 +5,7 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { GenderType, MemberStatus } from "@prisma/client";
 import { generateUniqueMemberCode } from "@/lib/member-code";
+import { broadcastPushNotification } from "@/lib/push-notifications";
 
 const gateRegisterSchema = z.object({
   slug: z.string().min(1, "Branch slug is required"),
@@ -24,6 +25,7 @@ const gateRegisterSchema = z.object({
   emergencyContactName: z.string().optional().nullable().or(z.literal("")),
   emergencyContactPhone: z.string().optional().nullable().or(z.literal("")),
   planId: z.string().uuid("Valid plan ID required").optional().nullable().or(z.literal("")),
+  photoUrl: z.string().optional().nullable().or(z.literal("")),
 });
 
 export async function POST(req: NextRequest) {
@@ -58,6 +60,7 @@ export async function POST(req: NextRequest) {
       emergencyContactName,
       emergencyContactPhone,
       planId,
+      photoUrl,
     } = parsed.data;
 
     const numHeight = Number(height);
@@ -175,6 +178,7 @@ export async function POST(req: NextRequest) {
         dateOfBirth: parsedDob,
         emergencyContactName: emergencyContactName?.trim() || null,
         emergencyContactPhone: emergencyContactPhone?.trim() || null,
+        photoUrl: photoUrl || null,
         status: MemberStatus.LEAD,
         healthMetrics: {
           heightCm: numHeight,
@@ -191,11 +195,30 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Broadcast instant push alert to gym owners & branch staff devices
+    try {
+      await broadcastPushNotification({
+        tenantId: tenant.id,
+        includeAdmins: true,
+        payload: {
+          title: "New Gate Registration! 🏋️",
+          body: `${member.firstName} ${member.lastName} (${cleanPhone}) self-registered via Gate QR at ${tenant.businessName}!`,
+          icon: member.photoUrl || "/bff-icon.png",
+          badge: "/bff-icon.png",
+          url: `/members`,
+          tag: `gate-reg-${member.id}`,
+        },
+      });
+    } catch (pushErr) {
+      console.warn("[GATE_REGISTER_PUSH_WARN] Push notification dispatch non-fatal warning:", pushErr);
+    }
+
     return apiSuccess(
       {
         message: "Gate registration received successfully!",
         memberCode: member.memberCode,
         fullName: `${member.firstName} ${member.lastName}`,
+        photoUrl: member.photoUrl,
         businessName: tenant.businessName,
         status: "LEAD",
         requestedPlan: planDetails,

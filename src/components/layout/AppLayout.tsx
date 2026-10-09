@@ -113,6 +113,7 @@ export function AppLayout({ children, user }: AppLayoutProps) {
               <Link
                 key={item.name}
                 href={item.href}
+                prefetch={true}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all",
                   isActive
@@ -157,6 +158,7 @@ export function AppLayout({ children, user }: AppLayoutProps) {
         <div className="px-3 pb-2">
           <Link
             href="/settings"
+            prefetch={true}
             className={cn(
               "flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all",
               pathname === "/settings"
@@ -310,6 +312,7 @@ export function AppLayout({ children, user }: AppLayoutProps) {
                     <Link
                       key={item.name}
                       href={item.href}
+                      prefetch={true}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
                         "flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95",
@@ -350,6 +353,7 @@ export function AppLayout({ children, user }: AppLayoutProps) {
                 <div className="pt-2">
                   <Link
                     href="/settings"
+                    prefetch={true}
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
                       "flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95",

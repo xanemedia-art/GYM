@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, UserPlus, AlertCircle, Sparkles, Fingerprint, Loader2 } from "lucide-react";
+import { AvatarUploader } from "@/components/common/AvatarUploader";
 
 interface OnboardMemberModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function OnboardMemberModal({ isOpen, onClose, onSuccess }: OnboardMember
     emergencyContactPhone: "",
     goal: "General Fitness",
     doorLockUid: "",
+    photoUrl: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -52,8 +54,14 @@ export function OnboardMemberModal({ isOpen, onClose, onSuccess }: OnboardMember
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    if (!formData.photoUrl) {
+      setError("Member photograph is mandatory. Please snap a photo using the desk webcam or upload an image before proceeding.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const res = await fetch("/api/v1/members", {
@@ -66,6 +74,7 @@ export function OnboardMemberModal({ isOpen, onClose, onSuccess }: OnboardMember
           phone: formData.phone,
           email: formData.email || undefined,
           dateOfBirth: formData.dateOfBirth || undefined,
+          photoUrl: formData.photoUrl,
           emergencyContactName: formData.emergencyContactName || undefined,
           emergencyContactPhone: formData.emergencyContactPhone || undefined,
           doorLockUid: formData.doorLockUid ? formData.doorLockUid.trim() : undefined,
@@ -114,6 +123,17 @@ export function OnboardMemberModal({ isOpen, onClose, onSuccess }: OnboardMember
               <span>{error}</span>
             </div>
           )}
+
+          {/* Member Profile Photo */}
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
+            <AvatarUploader
+              value={formData.photoUrl}
+              onChange={(url) => setFormData((prev) => ({ ...prev, photoUrl: url || "" }))}
+              label="Member Profile Photo"
+              description="Snap with desk webcam or upload image (Mandatory for entry pass)"
+              required={true}
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
