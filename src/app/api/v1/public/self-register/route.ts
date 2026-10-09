@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
       prisma.member.findFirst({ where: { tenantId, phone, isDeleted: false } }),
     ]);
 
-    if (!plan || plan.versions.length === 0) {
+    if (!plan) {
       return apiError("Selected plan is not available", "NOT_FOUND", 404);
     }
 
@@ -148,7 +148,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const latestVersion = plan.versions[0];
+    let latestVersion = plan.versions[0];
+    if (!latestVersion) {
+      latestVersion = await prisma.membershipPlanVersion.create({
+        data: {
+          planId: plan.id,
+          versionNumber: 1,
+          durationDays: plan.durationDays,
+          basePrice: plan.basePrice,
+        },
+      });
+    }
+
     const startDate = new Date();
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + latestVersion.durationDays);

@@ -48,9 +48,19 @@ export async function POST(req: NextRequest) {
     ]);
 
     if (!member) return apiError("Member not found", "NOT_FOUND", 404);
-    if (!plan || plan.versions.length === 0) return apiError("Plan not found", "NOT_FOUND", 404);
+    if (!plan) return apiError("Plan not found", "NOT_FOUND", 404);
 
-    const latestVersion = plan.versions[0];
+    let latestVersion = plan.versions[0];
+    if (!latestVersion) {
+      latestVersion = await prisma.membershipPlanVersion.create({
+        data: {
+          planId: plan.id,
+          versionNumber: 1,
+          durationDays: plan.durationDays,
+          basePrice: plan.basePrice,
+        },
+      });
+    }
 
     const startDate = inputStartDate ? new Date(inputStartDate) : new Date();
     const endDate = new Date(startDate);

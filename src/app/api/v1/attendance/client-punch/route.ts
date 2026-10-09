@@ -55,14 +55,19 @@ export async function POST(req: NextRequest) {
           { phone: { contains: phoneClean.length >= 10 ? phoneClean.slice(-10) : cleanId } },
         ],
       },
-      include: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        memberCode: true,
         memberships: {
           where: { status: "ACTIVE" },
           orderBy: { endDate: "desc" },
           take: 1,
-          include: {
+          select: {
+            endDate: true,
             planVersion: {
-              include: { plan: { select: { name: true } } },
+              select: { plan: { select: { name: true } } },
             },
           },
         },

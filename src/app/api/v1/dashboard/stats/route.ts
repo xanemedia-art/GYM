@@ -4,6 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { MemberStatus, InvoiceStatus } from "@prisma/client";
 
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+const statsCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 10000; // 10 seconds
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
@@ -12,6 +19,13 @@ export async function GET(req: NextRequest) {
     }
 
     const tenantId = session.tenantId;
+    const isFresh = req.nextUrl.searchParams.get("fresh") === "true";
+
+    const cached = statsCache.get(tenantId);
+    if (!isFresh && cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      return apiSuccess(cached.data);
+    }
+
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
@@ -147,7 +161,7 @@ export async function GET(req: NextRequest) {
       events: nextMonthEventsCount,
     };
 
-    return apiSuccess({
+    const statsPayload = {
       members: {
         total: totalMembers,
         active: activeMembers,
@@ -169,9 +183,14 @@ export async function GET(req: NextRequest) {
       },
       devices,
       upcomingMonth,
-    });
+    };
+
+    statsCache.set(tenantId, { data: statsPayload, timestamp: Date.now() });
+
+    return apiSuccess(statsPayload);
   } catch (error: any) {
     console.error("Dashboard Stats API Error:", error);
     return apiError("Failed to fetch dashboard metrics", "SERVER_ERROR", 500);
   }
 }
+

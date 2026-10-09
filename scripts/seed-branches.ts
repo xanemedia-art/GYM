@@ -143,6 +143,13 @@ async function main() {
             basePrice: plan.basePrice,
             joiningFee: plan.joiningFee,
             isActive: true,
+            versions: {
+              create: {
+                versionNumber: 1,
+                durationDays: plan.durationDays,
+                basePrice: plan.basePrice,
+              },
+            },
           },
         });
       }

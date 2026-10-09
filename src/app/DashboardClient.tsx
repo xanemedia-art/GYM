@@ -8,11 +8,9 @@ import { UpcomingMonthCard } from "@/components/dashboard/UpcomingMonthCard";
 import { LiveAttendanceFeed } from "@/components/dashboard/LiveAttendanceFeed";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { OnboardMemberModal } from "@/components/members/OnboardMemberModal";
-import { CollectPaymentModal } from "@/components/billing/CollectPaymentModal";
 import { ManualCheckinModal } from "@/components/attendance/ManualCheckinModal";
-import { ShareInviteModal } from "@/components/dashboard/ShareInviteModal";
-import { CustomPaymentModal } from "@/components/billing/CustomPaymentModal";
-import { RefreshCw, Sparkles, Share2 } from "lucide-react";
+import { RefreshCw, Sparkles, QrCode } from "lucide-react";
+import Link from "next/link";
 
 interface DashboardClientProps {
   user: {
@@ -30,14 +28,12 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [isCustomPaymentModalOpen, setIsCustomPaymentModalOpen] = useState(false);
   const [isManualPunchModalOpen, setIsManualPunchModalOpen] = useState(false);
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
-  const fetchStats = async () => {
+  const fetchStats = async (fresh = false) => {
     try {
-      const res = await fetch("/api/v1/dashboard/stats");
+      const url = fresh ? "/api/v1/dashboard/stats?fresh=true" : "/api/v1/dashboard/stats";
+      const res = await fetch(url);
       const json = await res.json();
       if (json.success && json.data) {
         setStats(json.data);
@@ -52,7 +48,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   useEffect(() => {
     fetchStats();
     // Auto-refresh metrics every 30 seconds
-    const interval = setInterval(fetchStats, 30000);
+    const interval = setInterval(() => fetchStats(false), 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -77,16 +73,16 @@ export default function DashboardClient({ user }: DashboardClientProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsInviteModalOpen(true)}
+            <Link
+              href="/gate-qr"
               className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-xs font-bold text-emerald-800 border border-emerald-200/80 transition-all flex items-center gap-1.5 shadow-2xs"
             >
-              <Share2 className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Share Join Link</span>
-            </button>
+              <QrCode className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Gate QR Poster</span>
+            </Link>
 
             <button
-              onClick={fetchStats}
+              onClick={() => fetchStats(true)}
               disabled={loading}
               className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-xs"
             >
@@ -96,13 +92,10 @@ export default function DashboardClient({ user }: DashboardClientProps) {
           </div>
         </div>
 
-        {/* Quick Actions Grid */}
+        {/* Quick Actions Grid (Streamlined) */}
         <QuickActions
           onAddMember={() => setIsOnboardModalOpen(true)}
-          onCollectPayment={() => setIsPaymentModalOpen(true)}
           onManualPunch={() => setIsManualPunchModalOpen(true)}
-          onShareInvite={() => setIsInviteModalOpen(true)}
-          onCustomPayment={() => setIsCustomPaymentModalOpen(true)}
         />
 
         {/* Real-time Metric Cards */}
@@ -143,27 +136,10 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         onSuccess={fetchStats}
       />
 
-      <CollectPaymentModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        onSuccess={fetchStats}
-      />
-
-      <CustomPaymentModal
-        isOpen={isCustomPaymentModalOpen}
-        onClose={() => setIsCustomPaymentModalOpen(false)}
-      />
-
       <ManualCheckinModal
         isOpen={isManualPunchModalOpen}
         onClose={() => setIsManualPunchModalOpen(false)}
         onSuccess={fetchStats}
-      />
-
-      <ShareInviteModal
-        isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
-        gymName={user.tenant?.businessName}
       />
     </AppLayout>
   );

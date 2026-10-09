@@ -219,6 +219,26 @@ export default function CalendarClient({ user }: CalendarClientProps) {
     (e) => !["BIRTHDAY", "EXPIRY"].includes(e.eventType)
   ).length;
 
+  const [syncingHolidays, setSyncingHolidays] = useState(false);
+
+  const handleSyncIndianHolidays = async () => {
+    setSyncingHolidays(true);
+    try {
+      const res = await fetch("/api/v1/calendar/sync-holidays", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.data?.message || "Indian Government Holidays synchronized!");
+        fetchEvents();
+      } else {
+        alert(data.error?.message || "Failed to sync holidays");
+      }
+    } catch (e) {
+      alert("Network error syncing calendar");
+    } finally {
+      setSyncingHolidays(false);
+    }
+  };
+
   const getEventBadge = (type: string) => {
     switch (type) {
       case "BIRTHDAY":
@@ -226,6 +246,12 @@ export default function CalendarClient({ user }: CalendarClientProps) {
           bg: "bg-pink-50 text-pink-700 border-pink-200",
           icon: Cake,
           label: "Birthday",
+        };
+      case "HOLIDAY":
+        return {
+          bg: "bg-orange-50 text-orange-800 border-orange-200",
+          icon: Sparkles,
+          label: "Govt / National Holiday",
         };
       case "EXPIRY":
         return {
@@ -268,13 +294,23 @@ export default function CalendarClient({ user }: CalendarClientProps) {
           <div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
               <CalendarIcon className="h-6 w-6 text-emerald-600" />
-              Special Occasions & Calendar
+              Important Dates & Indian Calendar
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Member birthdays, subscription renewals, bootcamps, and gym anniversary campaigns
+              Member birthdays, Government of India gazetted holidays, and gym operational dates
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSyncIndianHolidays}
+              disabled={syncingHolidays}
+              className="flex items-center gap-2 bg-orange-50 hover:bg-orange-100 text-orange-900 border border-orange-200/90 font-bold px-3.5 py-2.5 rounded-xl text-xs transition-all shadow-2xs active:scale-95 disabled:opacity-50"
+              title="Auto-Sync official Government of India Gazetted Holidays"
+            >
+              {syncingHolidays ? <Loader2 className="h-4 w-4 animate-spin text-orange-600" /> : <span>🇮🇳</span>}
+              <span>Auto-Sync Indian Holidays</span>
+            </button>
+
             <button
               onClick={() => {
                 setEventDate(format(selectedDay, "yyyy-MM-dd"));
@@ -283,7 +319,7 @@ export default function CalendarClient({ user }: CalendarClientProps) {
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition-all shadow-sm shadow-emerald-600/30 active:scale-95"
             >
               <Plus className="h-4 w-4" />
-              Schedule Event
+              <span>Mark Gym Date</span>
             </button>
           </div>
         </div>

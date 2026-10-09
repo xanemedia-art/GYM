@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       orderBy: { durationDays: "asc" },
     });
 
-    return apiSuccess({
+    const response = apiSuccess({
       branch: {
         id: tenant.id,
         name: tenant.businessName,
@@ -59,6 +59,8 @@ export async function GET(req: NextRequest) {
         version: p.versions[0]?.versionNumber || 1,
       })),
     });
+    response.headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+    return response;
   } catch (error: any) {
     console.error("Public Plans API Error:", error);
     return apiError("Failed to fetch membership plans", "SERVER_ERROR", 500);

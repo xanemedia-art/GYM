@@ -208,6 +208,9 @@ model Member {
   @@unique([tenantId, memberCode], name: "uq_tenant_member_code")
   @@unique([tenantId, phone], name: "uq_tenant_member_phone")
   @@index([tenantId, status], name: "idx_members_tenant_status")
+  @@index([tenantId, isDeleted, status], name: "idx_members_tenant_active_status")
+  @@index([tenantId, isDeleted, phone], name: "idx_members_tenant_phone_search")
+  @@index([tenantId, isDeleted, memberCode], name: "idx_members_tenant_code_search")
   @@map("members")
 }
 
@@ -452,6 +455,7 @@ model AttendanceRecord {
 
   @@unique([tenantId, dedupHash], name: "uq_attendance_dedup")
   @@index([tenantId, punchTime], name: "idx_attendance_tenant_time")
+  @@index([tenantId, punchTime, memberId], name: "idx_attendance_tenant_time_member")
   @@index([memberId, punchTime], name: "idx_attendance_member")
   @@map("attendance_records")
 }

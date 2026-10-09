@@ -5,7 +5,9 @@ import { getWebsiteContent, saveWebsiteContent, WebsiteContent, DEFAULT_WEBSITE_
 export async function GET(req: NextRequest) {
   try {
     const content = getWebsiteContent();
-    return apiSuccess(content);
+    const response = apiSuccess(content);
+    response.headers.set("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
+    return response;
   } catch (error: any) {
     console.error("GET /api/v1/website-content error:", error);
     return apiError("Failed to fetch website content", "SERVER_ERROR", 500);

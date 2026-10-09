@@ -10,12 +10,18 @@ export * from "@/types/website-content";
 
 const CONTENT_FILE_PATH = path.join(process.cwd(), "src", "data", "website-content.json");
 
+let cachedContent: WebsiteContent | null = null;
+
 export function getWebsiteContent(): WebsiteContent {
+  if (cachedContent) {
+    return cachedContent;
+  }
+
   try {
     if (fs.existsSync(CONTENT_FILE_PATH)) {
       const fileData = fs.readFileSync(CONTENT_FILE_PATH, "utf-8");
       const parsed = JSON.parse(fileData);
-      return {
+      cachedContent = {
         general: { ...DEFAULT_WEBSITE_CONTENT.general, ...parsed.general },
         sections: {
           hero: { ...DEFAULT_WEBSITE_CONTENT.sections.hero, ...parsed.sections?.hero },
@@ -24,6 +30,7 @@ export function getWebsiteContent(): WebsiteContent {
         },
         branches: Array.isArray(parsed.branches) && parsed.branches.length > 0 ? parsed.branches : BRANCHES,
       };
+      return cachedContent;
     }
   } catch (err) {
     console.warn("Could not read website-content.json, using defaults:", err);
@@ -38,6 +45,7 @@ export function saveWebsiteContent(content: WebsiteContent): void {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(CONTENT_FILE_PATH, JSON.stringify(content, null, 2), "utf-8");
+    cachedContent = content; // update in-memory cache immediately
   } catch (err) {
     console.error("Failed to save website-content.json:", err);
     throw err;

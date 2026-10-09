@@ -7,23 +7,15 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  CreditCard,
   Fingerprint,
-  CalendarCheck,
-  Cpu,
-  BarChart3,
   CalendarDays,
-  Lock,
+  QrCode,
   Settings,
   LogOut,
   Bell,
   Search,
   Menu,
   X,
-  Dumbbell,
-  Monitor,
-  Globe,
-  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GlobalSearchDialog } from "./GlobalSearchDialog";
@@ -59,16 +51,13 @@ export function AppLayout({ children, user }: AppLayoutProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Simplified Core Navigation for Gym Owners & Staff
+  // 5 Core Operational Pillars: Dashboard, Members, Attendance, Calendar, Gate QR Poster
   const primaryNavItems = [
     { name: "Dashboard", href: "/portal", icon: LayoutDashboard, shortName: "Home" },
     { name: "Members", href: "/members", icon: Users, shortName: "Members" },
     { name: "Attendance", href: "/attendance", icon: Fingerprint, shortName: "Attendance" },
-    { name: "Calendar", href: "/calendar", icon: CalendarDays, shortName: "Calendar" },
-    { name: "Website CMS", href: "/website-cms", icon: Globe, shortName: "Website" },
-    { name: "Plans", href: "/plans", icon: Package, shortName: "Plans" },
-    { name: "POS & Billing", href: "/billing", icon: CreditCard, shortName: "Billing" },
-    { name: "Settings", href: "/settings", icon: Settings, shortName: "Settings" },
+    { name: "Calendar & Dates", href: "/calendar", icon: CalendarDays, shortName: "Calendar" },
+    { name: "Gate QR Poster", href: "/gate-qr", icon: QrCode, shortName: "Gate QR" },
   ];
 
   const handleLogout = async () => {
@@ -160,6 +149,22 @@ export function AppLayout({ children, user }: AppLayoutProps) {
           </div>
         </nav>
 
+        {/* Gym Settings Shortcut */}
+        <div className="px-3 pb-2">
+          <Link
+            href="/settings"
+            className={cn(
+              "flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all",
+              pathname === "/settings"
+                ? "bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100/70"
+            )}
+          >
+            <Settings className="h-4 w-4 text-slate-400" />
+            <span>Gym Settings</span>
+          </Link>
+        </div>
+
         {/* User Profile Card & Sign Out */}
         <div className="p-3 border-t border-slate-100 bg-slate-50/70">
           <div className="flex items-center justify-between">
@@ -213,16 +218,6 @@ export function AppLayout({ children, user }: AppLayoutProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              target="_blank"
-              rel="noreferrer"
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors"
-              title="Open public website in new tab"
-            >
-              <span>🌐 View Website</span>
-            </Link>
-
             <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs font-semibold text-emerald-700">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Biometric Gateway Online</span>
@@ -276,7 +271,20 @@ export function AppLayout({ children, user }: AppLayoutProps) {
                 </Link>
               ))}
             </div>
-            <div className="pt-2 border-t border-slate-100">
+            <div className="pt-2 border-t border-slate-100 space-y-1">
+              <Link
+                href="/settings"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all",
+                  pathname === "/settings"
+                    ? "bg-emerald-50 text-emerald-700 font-bold"
+                    : "text-slate-700 hover:bg-slate-100"
+                )}
+              >
+                <Settings className="h-4 w-4 text-slate-500" />
+                <span>Gym Settings</span>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50"

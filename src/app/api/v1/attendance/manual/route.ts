@@ -31,14 +31,24 @@ export async function POST(req: NextRequest) {
 
     const { memberId, punchType, verificationMode } = parsed.data;
 
-    // Verify member exists in tenant
+    // Verify member exists in tenant (lean selection for sub-20ms high concurrency)
     const member = await prisma.member.findFirst({
       where: { id: memberId, tenantId: session.tenantId, isDeleted: false },
-      include: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        memberCode: true,
+        status: true,
         memberships: {
           where: { status: "ACTIVE" },
           take: 1,
           orderBy: { endDate: "desc" },
+          select: {
+            id: true,
+            endDate: true,
+            status: true,
+          },
         },
       },
     });

@@ -98,12 +98,29 @@ export function GymSwitcher({ currentTenant, userRole }: GymSwitcherProps) {
 
   const isOwnerOrAdmin = userRole === "GYM_OWNER" || userRole === "SUPER_ADMIN";
 
+  // For Staff / Trainers / Front-Desk: Strictly lock to their assigned gym workspace
+  if (!isOwnerOrAdmin) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 shadow-2xs">
+        <div className="h-6 w-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+          <Building2 className="h-3.5 w-3.5" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs font-bold text-slate-900 leading-tight">
+            {currentTenant?.businessName || "My Gym Branch"}
+          </span>
+          <span className="text-[10px] text-slate-500 font-medium">Assigned Branch</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 hover:border-emerald-300 hover:bg-emerald-50/40 text-slate-800 transition-all shadow-2xs group text-left"
-        title="Switch active gym location"
+        title="Switch active gym location (Owner Only)"
       >
         <div className="h-6 w-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
           <Building2 className="h-3.5 w-3.5" />
@@ -113,7 +130,7 @@ export function GymSwitcher({ currentTenant, userRole }: GymSwitcherProps) {
             {currentTenant?.businessName || "Select Gym"}
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
           </span>
-          <span className="text-[10px] text-slate-500 font-medium">Chain Location</span>
+          <span className="text-[10px] text-slate-500 font-medium">Owner Workspace</span>
         </div>
         <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-700 transition-transform ml-1" />
       </button>

@@ -66,11 +66,14 @@ export async function POST(req: NextRequest) {
       return apiError("Invalid email or password", "AUTH_FAILED", 401);
     }
 
-    // Update last login timestamp
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
+    // Update last login timestamp asynchronously in background (non-blocking)
+    prisma.user
+      .update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      })
+      .catch((err) => console.warn("Background lastLoginAt update failed:", err));
+
 
     const sessionPayload = {
       id: user.id,
