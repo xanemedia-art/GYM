@@ -145,11 +145,11 @@ export default function MemberDetailClient({ memberId, user }: MemberDetailClien
         </div>
 
         {/* Member Header Profile Card */}
-        <div className="rounded-2xl bg-white border border-slate-200/90 p-6 shadow-xs">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
+        <div className="rounded-2xl bg-white border border-slate-200/90 p-4 sm:p-6 shadow-xs">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+            <div className="flex items-center gap-3.5 sm:gap-4 w-full md:w-auto">
               {member.photoUrl ? (
-                <div className="relative h-16 w-16 rounded-2xl overflow-hidden border-2 border-emerald-300 shadow-sm shrink-0 bg-slate-100">
+                <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-2xl overflow-hidden border-2 border-emerald-300 shadow-sm shrink-0 bg-slate-100">
                   <img
                     src={member.photoUrl}
                     alt={`${member.firstName} ${member.lastName}`}
@@ -157,16 +157,16 @@ export default function MemberDetailClient({ memberId, user }: MemberDetailClien
                   />
                 </div>
               ) : (
-                <div className="h-16 w-16 rounded-2xl bg-emerald-100 border border-emerald-200 text-emerald-800 font-black text-2xl flex items-center justify-center shrink-0">
+                <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl bg-emerald-100 border border-emerald-200 text-emerald-800 font-black text-2xl flex items-center justify-center shrink-0">
                   {member.firstName.charAt(0)}
                 </div>
               )}
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h1 className="text-xl font-bold text-slate-900">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-lg sm:text-xl font-bold text-slate-900 truncate">
                     {member.firstName} {member.lastName}
                   </h1>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
+                  <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
                     {member.memberCode}
                   </span>
                   <span
@@ -182,42 +182,48 @@ export default function MemberDetailClient({ memberId, user }: MemberDetailClien
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-medium mt-2">
-                  <span className="flex items-center gap-1 text-slate-700">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 font-medium mt-1.5">
+                  <a
+                    href={`tel:${member.phone.replace(/\D/g, "").slice(-10)}`}
+                    className="flex items-center gap-1 text-slate-700 hover:text-emerald-700 font-bold"
+                  >
                     <Phone className="h-3.5 w-3.5 text-slate-400" />
-                    {member.phone}
-                  </span>
-                  {member.email && <span>{member.email}</span>}
-                  <span>Enrolled on {formatDate(member.createdAt)}</span>
+                    <span>{member.phone}</span>
+                  </a>
+                  {member.email && <span className="truncate max-w-[180px] sm:max-w-none">{member.email}</span>}
+                  <span>Enrolled {formatDate(member.createdAt)}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 self-stretch md:self-auto">
+            {/* Quick Desk Actions Grid (Optimized for Mobile Phones) */}
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full md:w-auto pt-2 md:pt-0">
               <button
+                type="button"
                 onClick={() => setEditOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 text-slate-700 hover:text-emerald-800 text-xs font-bold shadow-2xs flex items-center justify-center gap-1.5 transition-all"
+                className="h-10 sm:h-auto px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 text-slate-800 hover:text-emerald-800 text-xs font-bold shadow-2xs flex items-center justify-center gap-2 transition-all active:scale-95"
               >
-                <Edit2 className="h-3.5 w-3.5 text-slate-500" />
-                <span>Edit Details</span>
+                <Edit2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>Edit Profile</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => setRenewOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-800 text-xs font-bold shadow-2xs flex items-center justify-center gap-1.5 transition-all"
+                className="h-10 sm:h-auto px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-800 text-xs font-bold shadow-2xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
               >
-                <Plus className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Renew / Set Plan</span>
+                <Plus className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>Renew / Plan</span>
               </button>
 
               <a
                 href={`https://wa.me/91${member.phone.replace(/\D/g, "").slice(-10)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex-1 md:flex-initial px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all"
+                className="col-span-2 sm:col-auto h-10 sm:h-auto px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all active:scale-95"
               >
-                <MessageCircle className="h-4 w-4" />
-                <span>WhatsApp</span>
+                <MessageCircle className="h-4 w-4 shrink-0" />
+                <span>Chat on WhatsApp</span>
               </a>
             </div>
           </div>
@@ -333,20 +339,20 @@ export default function MemberDetailClient({ memberId, user }: MemberDetailClien
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   {activeMembership.status === "ACTIVE" ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <input
                         type="text"
                         placeholder="Freeze reason..."
                         value={freezeReason}
                         onChange={(e) => setFreezeReason(e.target.value)}
-                        className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-emerald-600"
+                        className="flex-1 sm:w-44 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[16px] sm:text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-hidden focus:border-emerald-600"
                       />
                       <button
                         onClick={() => handleFreeze(activeMembership.id)}
                         disabled={actionLoading}
-                        className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1 shadow-xs"
+                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1 shadow-xs shrink-0 active:scale-95 transition-all"
                       >
                         <Snowflake className="h-3.5 w-3.5" />
                         <span>Freeze</span>
@@ -356,7 +362,7 @@ export default function MemberDetailClient({ memberId, user }: MemberDetailClien
                     <button
                       onClick={() => handleUnfreeze(activeMembership.id)}
                       disabled={actionLoading}
-                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
                     >
                       <Play className="h-3.5 w-3.5" />
                       <span>Unfreeze Today</span>
