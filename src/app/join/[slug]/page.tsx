@@ -5,19 +5,31 @@ import { AlertCircle, Dumbbell } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import PublicJoinClient from "./PublicJoinClient";
 
+import { verifyClientInviteToken } from "@/lib/invites";
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const tenant = await prisma.tenant.findUnique({
+  let tenant = await prisma.tenant.findUnique({
     where: { slug, isActive: true },
     select: { businessName: true },
   });
 
+  if (!tenant) {
+    const invitePayload = await verifyClientInviteToken(slug);
+    if (invitePayload?.tenantId) {
+      tenant = await prisma.tenant.findUnique({
+        where: { id: invitePayload.tenantId, isActive: true },
+        select: { businessName: true },
+      });
+    }
+  }
+
   return {
-    title: tenant ? `Join ${tenant.businessName} | Gate Self-Registration` : "Gym Self-Registration",
+    title: tenant ? `Join ${tenant.businessName} | Self-Registration Portal` : "Gym Self-Registration",
     description: "Scan, register, and start your fitness journey with our gym family.",
   };
 }
@@ -26,7 +38,7 @@ export default async function PublicJoinPage({ params }: PageProps) {
   const { slug } = await params;
 
   // 1. Check if slug matches a Gym Tenant Branch (Gate QR Self-Registration)
-  const tenant = await prisma.tenant.findUnique({
+  let tenant = await prisma.tenant.findUnique({
     where: { slug, isActive: true },
     select: {
       id: true,
@@ -42,23 +54,52 @@ export default async function PublicJoinPage({ params }: PageProps) {
           name: true,
           description: true,
           durationDays: true,
-          basePrice: true,
-          joiningFee: true,
         },
         orderBy: { durationDays: "asc" },
       },
     },
   });
 
-  // 2. If it's a valid branch slug, render Gate QR Walk-in Self-Registration
+  let prefill: { clientName?: string; clientPhone?: string } = {};
+
+  // 2. If not a branch slug, check if slug is a valid client invite token
+  if (!tenant) {
+    const invitePayload = await verifyClientInviteToken(slug);
+    if (invitePayload?.tenantId) {
+      tenant = await prisma.tenant.findUnique({
+        where: { id: invitePayload.tenantId, isActive: true },
+        select: {
+          id: true,
+          businessName: true,
+          slug: true,
+          phone: true,
+          email: true,
+          address: true,
+          membershipPlans: {
+            where: { isActive: true },
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              durationDays: true,
+            },
+            orderBy: { durationDays: "asc" },
+          },
+        },
+      });
+
+      if (invitePayload.clientName) prefill.clientName = invitePayload.clientName;
+      if (invitePayload.clientPhone) prefill.clientPhone = invitePayload.clientPhone;
+    }
+  }
+
+  // 3. If a valid gym branch is resolved, render Walk-in Self-Registration
   if (tenant) {
     const serializedPlans = tenant.membershipPlans.map((p) => ({
       id: p.id,
       name: p.name,
       description: p.description,
       durationDays: p.durationDays,
-      basePrice: Number(p.basePrice),
-      joiningFee: Number(p.joiningFee),
     }));
 
     return (
@@ -72,6 +113,7 @@ export default async function PublicJoinPage({ params }: PageProps) {
           address: tenant.address as any,
         }}
         plans={serializedPlans}
+        prefill={prefill}
       />
     );
   }

@@ -12,17 +12,17 @@ const updateMemberSchema = z.object({
   lastName: z.string().min(1).optional(),
   gender: z.nativeEnum(GenderType).optional(),
   phone: z.string().min(10).optional(),
-  whatsappNumber: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  dateOfBirth: z.string().optional().nullable(),
-  photoUrl: z.string().optional(),
-  emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional(),
-  assignedTrainerId: z.string().optional().nullable(),
+  whatsappNumber: z.string().optional().nullable().or(z.literal("")),
+  email: z.string().email().optional().nullable().or(z.literal("")),
+  dateOfBirth: z.string().optional().nullable().or(z.literal("")),
+  photoUrl: z.string().optional().nullable().or(z.literal("")),
+  emergencyContactName: z.string().optional().nullable().or(z.literal("")),
+  emergencyContactPhone: z.string().optional().nullable().or(z.literal("")),
+  assignedTrainerId: z.string().optional().nullable().or(z.literal("")),
   status: z.nativeEnum(MemberStatus).optional(),
-  healthMetrics: z.record(z.string(), z.any()).optional(),
-  notes: z.string().optional(),
-  doorLockUid: z.string().optional(),
+  healthMetrics: z.record(z.string(), z.any()).optional().nullable(),
+  notes: z.string().optional().nullable().or(z.literal("")),
+  doorLockUid: z.string().optional().nullable().or(z.literal("")),
 });
 
 export async function GET(
@@ -149,7 +149,7 @@ export async function PATCH(
         ...(data.assignedTrainerId !== undefined && { assignedTrainerId: data.assignedTrainerId }),
         ...(data.status && { status: data.status }),
         ...(data.healthMetrics && { healthMetrics: data.healthMetrics as any }),
-        ...(data.notes !== undefined && { notes: data.notes }),
+        ...(data.notes !== undefined && { notes: data.notes ? data.notes.trim() : null }),
         ...(data.doorLockUid !== undefined && {
           customFields: {
             ...((existing.customFields as Record<string, any>) || {}),

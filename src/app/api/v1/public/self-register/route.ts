@@ -60,11 +60,11 @@ export async function GET(req: NextRequest) {
       }),
       prisma.membershipPlan.findMany({
         where: { tenantId: payload.tenantId, isActive: true },
-        include: {
-          versions: {
-            orderBy: { versionNumber: "desc" },
-            take: 1,
-          },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          durationDays: true,
         },
         orderBy: { durationDays: "asc" },
       }),

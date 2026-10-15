@@ -21,6 +21,9 @@ import {
   HeartHandshake,
   Edit2,
   Plus,
+  FileText,
+  Save,
+  Loader2,
 } from "lucide-react";
 import { formatINR, formatDate, formatTime } from "@/lib/utils";
 import { RenewMembershipModal } from "@/components/members/RenewMembershipModal";
@@ -53,6 +56,11 @@ export default function MemberDetailClient({ memberId, user }: MemberDetailClien
   const [renewOpen, setRenewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
+  // Staff Notes state
+  const [notesText, setNotesText] = useState("");
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesSaveSuccess, setNotesSaveSuccess] = useState(false);
+
   const fetchMember = async () => {
     setLoading(true);
     try {
@@ -60,11 +68,32 @@ export default function MemberDetailClient({ memberId, user }: MemberDetailClien
       const json = await res.json();
       if (json.success && json.data) {
         setMember(json.data);
+        setNotesText(json.data.notes || "");
       }
     } catch (err) {
       console.error("Failed to load member profile:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    setNotesSaving(true);
+    try {
+      const res = await fetch(`/api/v1/members/${memberId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: notesText }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error?.message || "Failed to save note");
+      setMember((prev: any) => ({ ...prev, notes: notesText.trim() || null }));
+      setNotesSaveSuccess(true);
+      setTimeout(() => setNotesSaveSuccess(false), 2500);
+    } catch (err: any) {
+      alert(err.message || "Failed to update member notes");
+    } finally {
+      setNotesSaving(false);
     }
   };
 
@@ -309,6 +338,51 @@ export default function MemberDetailClient({ memberId, user }: MemberDetailClien
                   <span className="text-slate-500 font-medium">Medical Clearances</span>
                   <span className="text-slate-900 font-semibold">{member.healthMetrics?.medicalNotes || "Normal / None"}</span>
                 </div>
+              </div>
+            </div>
+
+            {/* Staff Notes & Remarks Card */}
+            <div className="col-span-1 md:col-span-2 rounded-2xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-amber-600" />
+                  <span>Staff Notes & Remarks</span>
+                </h3>
+                {notesSaveSuccess && (
+                  <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-in fade-in">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Note saved
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500">
+                Record fitness goals, fee payment remarks, health alerts, or customer follow-ups.
+              </p>
+              <textarea
+                value={notesText}
+                onChange={(e) => setNotesText(e.target.value)}
+                placeholder="Type member notes, training progress, special requests, or fee collection reminders..."
+                rows={3}
+                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all resize-y"
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSaveNotes}
+                  disabled={notesSaving}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {notesSaving ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Saving Note...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-3.5 w-3.5" />
+                      <span>Save Note</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

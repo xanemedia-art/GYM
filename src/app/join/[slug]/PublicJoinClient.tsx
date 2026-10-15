@@ -17,7 +17,6 @@ import {
   AlertCircle,
   Building2,
 } from "lucide-react";
-import { formatINR } from "@/lib/utils";
 import { AvatarUploader } from "@/components/common/AvatarUploader";
 
 interface Plan {
@@ -25,8 +24,75 @@ interface Plan {
   name: string;
   description: string | null;
   durationDays: number;
-  basePrice: number;
-  joiningFee: number;
+}
+
+type DurationTierKey = "ALL" | "DAILY" | "MONTHLY" | "QUARTERLY" | "SEMI_ANNUAL" | "ANNUAL";
+
+interface TierConfig {
+  key: DurationTierKey;
+  label: string;
+  badge: string;
+  tagline: string;
+  features: string[];
+  gradient: string;
+  badgeBg: string;
+}
+
+function getPlanTierInfo(durationDays: number, name: string): TierConfig {
+  const lower = name.toLowerCase();
+  if (durationDays <= 3 || lower.includes("day") || lower.includes("daily")) {
+    return {
+      key: "DAILY",
+      label: "Daily",
+      badge: "1 Day Pass",
+      tagline: "Single day drop-in workout pass",
+      features: ["Full gym floor & cardio access", "Locker room & shower access", "Same-day instant activation"],
+      gradient: "from-amber-500/20 to-orange-500/10 border-amber-500/30",
+      badgeBg: "bg-amber-950/80 text-amber-300 border-amber-800",
+    };
+  }
+  if (durationDays <= 45 || (lower.includes("month") && !lower.includes("multi"))) {
+    return {
+      key: "MONTHLY",
+      label: "Monthly",
+      badge: "1 Month (30 Days)",
+      tagline: "Monthly strength & conditioning track",
+      features: ["Unlimited monthly gym access", "Card / gate entry system", "Standard locker facilities"],
+      gradient: "from-emerald-500/20 to-teal-500/10 border-emerald-500/30",
+      badgeBg: "bg-emerald-950/80 text-emerald-300 border-emerald-800",
+    };
+  }
+  if (durationDays <= 120 || lower.includes("quarter")) {
+    return {
+      key: "QUARTERLY",
+      label: "Quarterly",
+      badge: "3 Months (Quarter)",
+      tagline: "90-day transformation & fat-loss program",
+      features: ["90 days full workout floor access", "Body metrics tracking", "Locker & changing room access"],
+      gradient: "from-cyan-500/20 to-blue-500/10 border-cyan-500/30",
+      badgeBg: "bg-cyan-950/80 text-cyan-300 border-cyan-800",
+    };
+  }
+  if (durationDays <= 240 || lower.includes("semi") || lower.includes("half")) {
+    return {
+      key: "SEMI_ANNUAL",
+      label: "Semi-Annual",
+      badge: "6 Months (Semi-Annual)",
+      tagline: "180-day intermediate athletic progression",
+      features: ["180 days uninterrupted access", "Free membership freeze privilege", "Priority gym floor orientation"],
+      gradient: "from-purple-500/20 to-indigo-500/10 border-purple-500/30",
+      badgeBg: "bg-purple-950/80 text-purple-300 border-purple-800",
+    };
+  }
+  return {
+    key: "ANNUAL",
+    label: "Annual",
+    badge: "1 Year (Annual)",
+    tagline: "365-day complete VIP annual membership",
+    features: ["Full 365-day VIP gym access", "Complimentary freeze allowance", "Year-round priority perks"],
+    gradient: "from-yellow-500/20 to-amber-500/10 border-yellow-500/30",
+    badgeBg: "bg-yellow-950/80 text-yellow-300 border-yellow-800",
+  };
 }
 
 interface TenantInfo {
@@ -46,28 +112,42 @@ interface TenantInfo {
 interface PublicJoinClientProps {
   tenant: TenantInfo;
   plans: Plan[];
+  prefill?: {
+    clientName?: string;
+    clientPhone?: string;
+  };
 }
 
-export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProps) {
+export default function PublicJoinClient({ tenant, plans, prefill }: PublicJoinClientProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1 = Personal KYC, 2 = Plan Selection, 3 = Confirmation
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any | null>(null);
+  const [selectedDurationFilter, setSelectedDurationFilter] = useState<DurationTierKey>("ALL");
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    whatsappNumber: "",
-    email: "",
-    gender: "MALE",
-    dateOfBirth: "",
-    height: "",
-    currentWeight: "",
-    emergencyContactName: "",
-    emergencyContactPhone: "",
-    planId: plans.length > 0 ? plans[0].id : "",
-    photoUrl: "",
+  const [formData, setFormData] = useState(() => {
+    let fName = "";
+    let lName = "";
+    if (prefill?.clientName) {
+      const parts = prefill.clientName.trim().split(" ");
+      fName = parts[0] || "";
+      lName = parts.slice(1).join(" ") || "";
+    }
+    return {
+      firstName: fName,
+      lastName: lName,
+      phone: prefill?.clientPhone || "",
+      whatsappNumber: prefill?.clientPhone || "",
+      email: "",
+      gender: "MALE",
+      dateOfBirth: "",
+      height: "",
+      currentWeight: "",
+      emergencyContactName: "",
+      emergencyContactPhone: "",
+      planId: plans.length > 0 ? plans[0].id : "",
+      photoUrl: "",
+    };
   });
 
   const city = tenant.address?.city || tenant.address?.area || "India";
@@ -434,9 +514,57 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
               </button>
             </div>
 
+            {/* Duration Tier Filter Bar */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <span>Select Membership Duration:</span>
+              </label>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                {(
+                  [
+                    { key: "ALL", label: "All Durations" },
+                    { key: "DAILY", label: "Daily" },
+                    { key: "MONTHLY", label: "Monthly" },
+                    { key: "QUARTERLY", label: "Quarterly" },
+                    { key: "SEMI_ANNUAL", label: "Semi-Annual" },
+                    { key: "ANNUAL", label: "Annual" },
+                  ] as const
+                ).map((tier) => {
+                  const isActive = selectedDurationFilter === tier.key;
+                  return (
+                    <button
+                      key={tier.key}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDurationFilter(tier.key);
+                        if (tier.key !== "ALL") {
+                          const match = plans.find(
+                            (p) => getPlanTierInfo(p.durationDays, p.name).key === tier.key
+                          );
+                          if (match) setFormData((prev) => ({ ...prev, planId: match.id }));
+                        }
+                      }}
+                      className={`px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
+                        isActive
+                          ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/25 ring-1 ring-emerald-400"
+                          : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white border border-white/5"
+                      }`}
+                    >
+                      {tier.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Plan Cards Grid (Zero Fees Amount Shown) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {plans.map((p) => {
+              {(selectedDurationFilter === "ALL"
+                ? plans
+                : plans.filter((p) => getPlanTierInfo(p.durationDays, p.name).key === selectedDurationFilter)
+              ).map((p) => {
                 const isSelected = formData.planId === p.id;
+                const tier = getPlanTierInfo(p.durationDays, p.name);
                 return (
                   <div
                     key={p.id}
@@ -449,26 +577,43 @@ export default function PublicJoinClient({ tenant, plans }: PublicJoinClientProp
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800 font-mono">
-                          {p.durationDays} DAYS
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border font-mono ${tier.badgeBg}`}
+                        >
+                          {tier.badge}
                         </span>
-                        {isSelected && (
+                        {isSelected ? (
                           <span className="h-5 w-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold">
                             <Check className="h-3 w-3 stroke-[3]" />
                           </span>
+                        ) : (
+                          <span className="h-5 w-5 rounded-full border border-white/20 flex items-center justify-center" />
                         )}
                       </div>
                       <h3 className="text-sm font-bold text-white">{p.name}</h3>
-                      {p.description && (
-                        <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{p.description}</p>
-                      )}
+                      <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">
+                        {p.description || tier.tagline}
+                      </p>
+
+                      {/* Included Features Checklist */}
+                      <ul className="mt-3 space-y-1">
+                        {tier.features.map((feat, idx) => (
+                          <li key={idx} className="flex items-center gap-1.5 text-[10px] text-slate-300">
+                            <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-white/10 flex items-baseline justify-between">
-                      <div className="text-lg font-black text-white font-mono">
-                        {formatINR(p.basePrice)}
-                      </div>
-                      <span className="text-[10px] text-slate-400">Pay at desk</span>
+                    <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
+                      <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
+                        <CalendarCheck className="h-3.5 w-3.5 text-emerald-400" />
+                        <span>{tier.label} Duration</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/10">
+                        Pay offline at desk
+                      </span>
                     </div>
                   </div>
                 );
