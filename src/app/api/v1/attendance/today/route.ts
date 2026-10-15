@@ -3,11 +3,36 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/lib/api-response";
 
+interface AttendanceCacheEntry {
+  data: any;
+  timestamp: number;
+}
+const attendanceCache = new Map<string, AttendanceCacheEntry>();
+const ATTENDANCE_CACHE_TTL_MS = 2000; // 2 seconds micro-debounce for ultra-live accuracy
+
+export function invalidateAttendanceTodayCache(tenantId?: string) {
+  if (tenantId) {
+    attendanceCache.delete(tenantId);
+  } else {
+    attendanceCache.clear();
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session || !session.tenantId) {
       return apiError("Unauthorized", "UNAUTHORIZED", 401);
+    }
+
+    const tenantId = session.tenantId;
+    const isFresh = req.nextUrl.searchParams.get("fresh") === "true";
+
+    const cached = attendanceCache.get(tenantId);
+    if (!isFresh && cached && Date.now() - cached.timestamp < ATTENDANCE_CACHE_TTL_MS) {
+      const res = apiSuccess(cached.data);
+      res.headers.set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+      return res;
     }
 
     const todayStart = new Date();
@@ -59,11 +84,20 @@ export async function GET(req: NextRequest) {
       (r) => new Date(r.punchTime) >= ninetyMinutesAgo && r.punchType === "CHECK_IN"
     ).length;
 
-    return apiSuccess({
+    const payload = {
       totalCheckIns,
       estimatedActiveInside: activeInside,
       recentPunches: records,
+    };
+
+    attendanceCache.set(tenantId, {
+      data: payload,
+      timestamp: Date.now(),
     });
+
+    const res = apiSuccess(payload);
+    res.headers.set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+    return res;
   } catch (error: any) {
     console.error("Attendance Today API Error:", error);
     return apiError("Failed to fetch today's attendance feed", "SERVER_ERROR", 500);

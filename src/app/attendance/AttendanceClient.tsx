@@ -31,6 +31,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatTime, formatDate } from "@/lib/utils";
+import { getClientCache, setClientCache } from "@/lib/client-cache";
 
 interface AttendanceClientProps {
   user: {
@@ -46,8 +47,12 @@ interface AttendanceClientProps {
 }
 
 export default function AttendanceClient({ user }: AttendanceClientProps) {
-  const [data, setData] = useState<any>({ totalCheckIns: 0, estimatedActiveInside: 0, recentPunches: [] });
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `attendance_today_${user.tenant?.slug || "default"}`;
+  const cachedData = getClientCache<any>(cacheKey);
+  const [data, setData] = useState<any>(
+    () => cachedData || { totalCheckIns: 0, estimatedActiveInside: 0, recentPunches: [] }
+  );
+  const [loading, setLoading] = useState(!cachedData);
 
   // Modals
   const [isManualPunchOpen, setIsManualPunchOpen] = useState(false);
@@ -84,13 +89,14 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
     ? `${window.location.origin}/punch/${tenantSlug}`
     : `https://gym.com/punch/${tenantSlug}`;
 
-  const fetchAttendance = async () => {
-    setLoading(true);
+  const fetchAttendance = async (silent = false) => {
+    if (!silent && !data.recentPunches.length) setLoading(true);
     try {
       const res = await fetch("/api/v1/attendance/today");
       const json = await res.json();
       if (json.success && json.data) {
         setData(json.data);
+        setClientCache(cacheKey, json.data);
       }
     } catch (err) {
       console.error("Failed to load attendance:", err);
@@ -112,10 +118,10 @@ export default function AttendanceClient({ user }: AttendanceClientProps) {
   };
 
   useEffect(() => {
-    fetchAttendance();
+    fetchAttendance(Boolean(cachedData));
     fetchRecentSwipes();
     const interval = setInterval(() => {
-      fetchAttendance();
+      fetchAttendance(true);
       fetchRecentSwipes();
     }, 10000); // 10-second live refresh
     return () => clearInterval(interval);

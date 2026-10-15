@@ -8,6 +8,7 @@ import { CustomPaymentModal } from "@/components/billing/CustomPaymentModal";
 import { ShiftRegisterModal } from "@/components/billing/ShiftRegisterModal";
 import { CreditCard, IndianRupee, FileText, CheckCircle2, Clock, AlertCircle, Printer, ArrowUpRight, TrendingUp, Zap, Calculator } from "lucide-react";
 import { formatINR, formatDate } from "@/lib/utils";
+import { getClientCache, setClientCache } from "@/lib/client-cache";
 
 interface BillingClientProps {
   user: {
@@ -22,20 +23,23 @@ interface BillingClientProps {
 }
 
 export default function BillingClient({ user }: BillingClientProps) {
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `billing_invoices_${user.tenant?.slug || "default"}`;
+  const cachedInvoices = getClientCache<any[]>(cacheKey);
+  const [invoices, setInvoices] = useState<any[]>(() => cachedInvoices || []);
+  const [loading, setLoading] = useState(!cachedInvoices);
   const [isCollectPaymentOpen, setIsCollectPaymentOpen] = useState(false);
   const [isCustomPaymentOpen, setIsCustomPaymentOpen] = useState(false);
   const [isShiftRegisterOpen, setIsShiftRegisterOpen] = useState(false);
   const [receiptInvoice, setReceiptInvoice] = useState<any | null>(null);
 
-  const fetchInvoices = async () => {
-    setLoading(true);
+  const fetchInvoices = async (silent = false) => {
+    if (!silent && invoices.length === 0) setLoading(true);
     try {
       const res = await fetch("/api/v1/invoices?limit=50");
       const json = await res.json();
       if (json.success && json.data) {
         setInvoices(json.data);
+        setClientCache(cacheKey, json.data);
       }
     } catch (err) {
       console.error("Failed to fetch invoices:", err);
@@ -45,7 +49,7 @@ export default function BillingClient({ user }: BillingClientProps) {
   };
 
   useEffect(() => {
-    fetchInvoices();
+    fetchInvoices(Boolean(cachedInvoices));
   }, []);
 
   const totalBilled = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);

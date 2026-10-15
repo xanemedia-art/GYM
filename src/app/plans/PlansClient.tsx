@@ -17,6 +17,7 @@ import {
   Clock,
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
+import { getClientCache, setClientCache } from "@/lib/client-cache";
 
 interface PlansClientProps {
   user: {
@@ -31,8 +32,10 @@ interface PlansClientProps {
 }
 
 export default function PlansClient({ user }: PlansClientProps) {
-  const [plans, setPlans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `membership_plans_${user.tenant?.slug || "default"}`;
+  const cachedPlans = getClientCache<any[]>(cacheKey);
+  const [plans, setPlans] = useState<any[]>(() => cachedPlans || []);
+  const [loading, setLoading] = useState(!cachedPlans);
 
   // Create Modal state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -72,13 +75,14 @@ export default function PlansClient({ user }: PlansClientProps) {
     setTimeout(() => setSuccessToast(null), 3000);
   };
 
-  const fetchPlans = async () => {
-    setLoading(true);
+  const fetchPlans = async (silent = false) => {
+    if (!silent && plans.length === 0) setLoading(true);
     try {
       const res = await fetch("/api/v1/plans");
       const json = await res.json();
       if (json.success && json.data) {
         setPlans(json.data);
+        setClientCache(cacheKey, json.data);
       }
     } catch (err) {
       console.error("Failed to load plans:", err);
@@ -88,7 +92,7 @@ export default function PlansClient({ user }: PlansClientProps) {
   };
 
   useEffect(() => {
-    fetchPlans();
+    fetchPlans(Boolean(cachedPlans));
   }, []);
 
   const handleCreatePlan = async (e: React.FormEvent) => {

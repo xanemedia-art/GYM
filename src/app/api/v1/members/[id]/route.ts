@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/permissions";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { GenderType, MemberStatus } from "@prisma/client";
+import { invalidateMembersCache } from "../route";
 
 const updateMemberSchema = z.object({
   firstName: z.string().min(1).optional(),
@@ -171,6 +172,8 @@ export async function PATCH(
       },
     });
 
+    invalidateMembersCache(session.tenantId);
+
     return apiSuccess(updated);
   } catch (error: any) {
     console.error("Update Member API Error:", error);
@@ -222,6 +225,8 @@ export async function DELETE(
         entityId: id,
       },
     });
+
+    invalidateMembersCache(session.tenantId);
 
     return apiSuccess({ message: "Member successfully removed" });
   } catch (error: any) {

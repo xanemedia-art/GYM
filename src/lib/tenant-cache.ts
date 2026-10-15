@@ -21,6 +21,21 @@ const TENANT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes in-memory TTL
 const tenantIdCache = new Map<string, CacheEntry>();
 const tenantSlugCache = new Map<string, CacheEntry>();
 
+function normalizeTenant(rawTenant: any): CachedTenant | null {
+  if (!rawTenant) return null;
+  const tenant = { ...rawTenant };
+  if (tenant.settings) {
+    tenant.settings = {
+      ...tenant.settings,
+      gstRatePercentage:
+        tenant.settings.gstRatePercentage !== undefined && tenant.settings.gstRatePercentage !== null
+          ? Number(tenant.settings.gstRatePercentage)
+          : 18.0,
+    };
+  }
+  return tenant as CachedTenant;
+}
+
 /**
  * High-speed In-Memory Tenant Resolver (0.01ms vs 500ms remote database trip)
  * Eliminates redundant Supabase network roundtrips on every page transition.
@@ -51,17 +66,18 @@ export async function getCachedTenant(tenantId: string): Promise<CachedTenant | 
     },
   });
 
+  const normalized = normalizeTenant(tenant);
   const entry: CacheEntry = {
-    tenant: tenant as CachedTenant | null,
+    tenant: normalized,
     cachedAt: now,
   };
 
   tenantIdCache.set(tenantId, entry);
-  if (tenant?.slug) {
-    tenantSlugCache.set(tenant.slug, entry);
+  if (normalized?.slug) {
+    tenantSlugCache.set(normalized.slug, entry);
   }
 
-  return tenant as CachedTenant | null;
+  return normalized;
 }
 
 /**
@@ -92,17 +108,18 @@ export async function getCachedTenantBySlug(slug: string): Promise<CachedTenant 
     },
   });
 
+  const normalized = normalizeTenant(tenant);
   const entry: CacheEntry = {
-    tenant: tenant as CachedTenant | null,
+    tenant: normalized,
     cachedAt: now,
   };
 
   tenantSlugCache.set(slug, entry);
-  if (tenant?.id) {
-    tenantIdCache.set(tenant.id, entry);
+  if (normalized?.id) {
+    tenantIdCache.set(normalized.id, entry);
   }
 
-  return tenant as CachedTenant | null;
+  return normalized;
 }
 
 /**
@@ -116,7 +133,7 @@ export function invalidateTenantCache(tenantId?: string) {
     }
     tenantIdCache.delete(tenantId);
   } else {
-    tenantIdCache.clear;
+    tenantIdCache.clear();
     tenantSlugCache.clear();
   }
 }

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, ArrowRight, AlertCircle, ShieldCheck } from "lucide-react";
+import { Lock, Mail, ArrowRight, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,11 +36,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickFill = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword("Password@123");
   };
 
   return (
@@ -121,32 +116,13 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Fill Test Accounts */}
-          <div className="mt-8 pt-6 border-t border-slate-100">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Quick Fill Demo Accounts</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill("owner@fitzone.in")}
-                className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 text-left transition-all group"
-              >
-                <div className="text-[11px] font-bold text-slate-800 group-hover:text-emerald-700">Gym Owner</div>
-                <div className="text-[10px] text-slate-500 truncate">owner@fitzone.in</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickFill("reception@fitzone.in")}
-                className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 text-left transition-all group"
-              >
-                <div className="text-[11px] font-bold text-slate-800 group-hover:text-emerald-700">Front Desk</div>
-                <div className="text-[10px] text-slate-500 truncate">reception@fitzone.in</div>
-              </button>
-            </div>
+          {/* Secure Live Console Footer */}
+          <div className="mt-8 pt-5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span className="flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+              <span>Live Console Active</span>
+            </span>
+            <span>Be Free Fitness OS</span>
           </div>
         </div>
       </div>

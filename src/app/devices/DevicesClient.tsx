@@ -16,6 +16,7 @@ import {
   Server,
 } from "lucide-react";
 import { formatTime, formatDate } from "@/lib/utils";
+import { getClientCache, setClientCache } from "@/lib/client-cache";
 
 interface DevicesClientProps {
   user: {
@@ -30,8 +31,10 @@ interface DevicesClientProps {
 }
 
 export default function DevicesClient({ user }: DevicesClientProps) {
-  const [devices, setDevices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `hardware_devices_${user.tenant?.slug || "default"}`;
+  const cachedDevices = getClientCache<any[]>(cacheKey);
+  const [devices, setDevices] = useState<any[]>(() => cachedDevices || []);
+  const [loading, setLoading] = useState(!cachedDevices);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
   // Form State
@@ -43,13 +46,14 @@ export default function DevicesClient({ user }: DevicesClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [registeredCreds, setRegisteredCreds] = useState<any | null>(null);
 
-  const fetchDevices = async () => {
-    setLoading(true);
+  const fetchDevices = async (silent = false) => {
+    if (!silent && devices.length === 0) setLoading(true);
     try {
       const res = await fetch("/api/v1/devices");
       const json = await res.json();
       if (json.success && json.data) {
         setDevices(json.data);
+        setClientCache(cacheKey, json.data);
       }
     } catch (err) {
       console.error("Failed to load devices:", err);
@@ -59,7 +63,7 @@ export default function DevicesClient({ user }: DevicesClientProps) {
   };
 
   useEffect(() => {
-    fetchDevices();
+    fetchDevices(Boolean(cachedDevices));
   }, []);
 
   const handleRegisterDevice = async (e: React.FormEvent) => {

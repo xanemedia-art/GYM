@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { OnboardMemberModal } from "@/components/members/OnboardMemberModal";
 import { RenewMembershipModal } from "@/components/members/RenewMembershipModal";
+import { ImportMembersCsvModal } from "@/components/members/ImportMembersCsvModal";
 import {
   Search,
   UserPlus,
@@ -19,6 +20,7 @@ import {
   QrCode,
   Users,
   Trash2,
+  FileSpreadsheet,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { getClientCache, setClientCache } from "@/lib/client-cache";
@@ -42,6 +44,7 @@ export default function MembersClient({ user }: MembersClientProps) {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [loading, setLoading] = useState(!cachedMembers);
   const [isOnboardOpen, setIsOnboardOpen] = useState(false);
+  const [isImportCsvOpen, setIsImportCsvOpen] = useState(false);
   const [selectedMemberForRenew, setSelectedMemberForRenew] = useState<any | null>(null);
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
 
@@ -125,6 +128,14 @@ export default function MembersClient({ user }: MembersClientProps) {
               <QrCode className="h-4 w-4 text-emerald-600" />
               <span>Gate QR Poster</span>
             </Link>
+
+            <button
+              onClick={() => setIsImportCsvOpen(true)}
+              className="px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 text-slate-700 text-xs font-bold shadow-2xs flex items-center gap-1.5 transition-all"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+              <span>Import CSV</span>
+            </button>
 
             <button
               onClick={() => setIsOnboardOpen(true)}
@@ -551,6 +562,13 @@ export default function MembersClient({ user }: MembersClientProps) {
         onClose={() => setSelectedMemberForRenew(null)}
         member={selectedMemberForRenew}
         onSuccess={fetchMembers}
+      />
+
+      <ImportMembersCsvModal
+        isOpen={isImportCsvOpen}
+        onClose={() => setIsImportCsvOpen(false)}
+        onSuccess={fetchMembers}
+        branchName={user.tenant?.businessName}
       />
     </AppLayout>
   );

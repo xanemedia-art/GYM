@@ -168,6 +168,7 @@ model User {
   pushSubscriptions       PushSubscription[]
 
   @@unique([tenantId, email], name: "uq_tenant_user_email")
+  @@index([email], name: "idx_users_email")
   @@map("users")
 }
 
@@ -215,6 +216,7 @@ model Member {
   @@index([tenantId, isDeleted, status], name: "idx_members_tenant_active_status")
   @@index([tenantId, isDeleted, phone], name: "idx_members_tenant_phone_search")
   @@index([tenantId, isDeleted, memberCode], name: "idx_members_tenant_code_search")
+  @@index([tenantId, isDeleted, createdAt], name: "idx_members_tenant_created")
   @@map("members")
 }
 
@@ -276,6 +278,9 @@ model Membership {
   freezeLogs      MembershipFreezeLog[]
   invoices        Invoice[]
 
+  @@index([tenantId, status], name: "idx_memberships_tenant_status")
+  @@index([memberId, status, endDate], name: "idx_memberships_member_status_end")
+  @@index([tenantId, endDate], name: "idx_memberships_tenant_end")
   @@map("memberships")
 }
 
@@ -328,6 +333,9 @@ model Invoice {
   refunds    Refund[]
 
   @@unique([tenantId, invoiceNumber], name: "uq_tenant_invoice_number")
+  @@index([tenantId, issuedAt], name: "idx_invoices_tenant_issued")
+  @@index([tenantId, status], name: "idx_invoices_tenant_status")
+  @@index([memberId], name: "idx_invoices_member")
   @@map("invoices")
 }
 
@@ -368,6 +376,9 @@ model Payment {
   refunds     Refund[]
 
   @@unique([tenantId, paymentNumber], name: "uq_tenant_payment_number")
+  @@index([tenantId, paymentDate], name: "idx_payments_tenant_date")
+  @@index([memberId], name: "idx_payments_member")
+  @@index([invoiceId], name: "idx_payments_invoice")
   @@map("payments")
 }
 
@@ -527,6 +538,7 @@ model CalendarEvent {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@index([tenantId, eventDate], name: "idx_calendar_tenant_date")
   @@map("calendar_events")
 }
 

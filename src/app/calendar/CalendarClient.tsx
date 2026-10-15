@@ -22,6 +22,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay } from "date-fns";
+import { getClientCache, setClientCache } from "@/lib/client-cache";
 
 interface CalendarEventItem {
   id: string;
@@ -49,8 +50,14 @@ interface CalendarClientProps {
 export default function CalendarClient({ user }: CalendarClientProps) {
   const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<CalendarEventItem[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1;
+  const cacheKey = `calendar_events_${user.tenant?.slug || "default"}_${year}_${month}`;
+  const cachedEvents = getClientCache<CalendarEventItem[]>(cacheKey);
+
+  const [events, setEvents] = useState<CalendarEventItem[]>(() => cachedEvents || []);
+  const [loading, setLoading] = useState(!cachedEvents);
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [isDayPopupOpen, setIsDayPopupOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,16 +95,15 @@ export default function CalendarClient({ user }: CalendarClientProps) {
     }
   }, [searchParams]);
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth() + 1;
-
-  const fetchEvents = async () => {
-    setLoading(true);
+  const fetchEvents = async (silent = false) => {
+    if (!silent && events.length === 0) setLoading(true);
     try {
       const res = await fetch(`/api/v1/calendar?year=${year}&month=${month}`);
       const json = await res.json();
       if (json.success) {
-        setEvents(json.data.events || []);
+        const evts = json.data.events || [];
+        setEvents(evts);
+        setClientCache(cacheKey, evts);
       }
     } catch (err) {
       console.error("Failed to load calendar events", err);
@@ -107,7 +113,7 @@ export default function CalendarClient({ user }: CalendarClientProps) {
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchEvents(Boolean(cachedEvents));
   }, [year, month]);
 
   const handlePrevMonth = () => {

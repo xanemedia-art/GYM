@@ -48,7 +48,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Multi-tenant authorization guard: Verify user is authorized to manage target branch
-    if (session.role !== "SUPER_ADMIN") {
+    // GYM_OWNER and SUPER_ADMIN have multi-branch authority across all active gym locations
+    if (session.role !== "SUPER_ADMIN" && session.role !== "GYM_OWNER") {
       const authorizedUser = await prisma.user.findFirst({
         where: {
           email: session.email,

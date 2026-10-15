@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, ChevronDown, Check, Plus, MapPin, Users, Loader2 } from "lucide-react";
+import { clearClientCache, getClientCache, setClientCache } from "@/lib/client-cache";
 
 interface TenantBranch {
   id: string;
@@ -29,18 +30,20 @@ interface GymSwitcherProps {
 export function GymSwitcher({ currentTenant, userRole }: GymSwitcherProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [branches, setBranches] = useState<TenantBranch[]>([]);
+  const cachedBranches = getClientCache<TenantBranch[]>("gym_all_branches");
+  const [branches, setBranches] = useState<TenantBranch[]>(() => cachedBranches || []);
   const [loading, setLoading] = useState(false);
   const [switchingId, setSwitchingId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchBranches = async () => {
-    setLoading(true);
+  const fetchBranches = async (silent = false) => {
+    if (!silent && branches.length === 0) setLoading(true);
     try {
       const res = await fetch("/api/v1/tenants");
       const json = await res.json();
       if (json.success && json.data) {
         setBranches(json.data);
+        setClientCache("gym_all_branches", json.data);
       }
     } catch (e) {
       console.error("Failed to load branches:", e);
@@ -51,7 +54,7 @@ export function GymSwitcher({ currentTenant, userRole }: GymSwitcherProps) {
 
   useEffect(() => {
     if (open) {
-      fetchBranches();
+      fetchBranches(Boolean(cachedBranches));
     }
   }, [open]);
 
@@ -83,6 +86,7 @@ export function GymSwitcher({ currentTenant, userRole }: GymSwitcherProps) {
       const json = await res.json();
       if (json.success) {
         setOpen(false);
+        clearClientCache();
         // Force full refresh to reload all server data
         window.location.reload();
       } else {

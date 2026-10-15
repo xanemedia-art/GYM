@@ -9,7 +9,7 @@ interface CacheEntry {
   timestamp: number;
 }
 const statsCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 30000; // 30 seconds high-performance in-memory cache
+const CACHE_TTL_MS = 2000; // 2 seconds micro-debounce for ultra-live accuracy
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,23 +24,50 @@ export async function GET(req: NextRequest) {
     const cached = statsCache.get(tenantId);
     if (!isFresh && cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       const res = apiSuccess(cached.data);
-      res.headers.set("Cache-Control", "private, max-age=15, stale-while-revalidate=30");
+      res.headers.set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
       return res;
     }
-
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const currentMonth = now.getMonth() + 1;
+    const currentDay = now.getDate();
 
-    // 1. Member metrics & Pending Walk-in Verifications
-    const [totalMembers, activeMembers, expiringSoonMembers, expiredMembers, pendingMembersCount, pendingMembersList] = await Promise.all([
-      prisma.member.count({ where: { tenantId, isDeleted: false } }),
-      prisma.member.count({ where: { tenantId, status: MemberStatus.ACTIVE, isDeleted: false } }),
-      prisma.member.count({ where: { tenantId, status: MemberStatus.EXPIRING_SOON, isDeleted: false } }),
-      prisma.member.count({ where: { tenantId, status: MemberStatus.EXPIRED, isDeleted: false } }),
-      prisma.member.count({ where: { tenantId, status: MemberStatus.LEAD, isDeleted: false } }),
+    const tomorrowDate = new Date(now);
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowMonth = tomorrowDate.getMonth() + 1;
+    const tomorrowDay = tomorrowDate.getDate();
+
+    const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
+    const nextMonthIndex = nextMonthDate.getMonth();
+    const nextMonthNumber = nextMonthIndex + 1;
+
+    // Run all database queries in a single consolidated parallel batch
+    const [
+      statusGroups,
+      pendingMembersList,
+      todayCheckIns,
+      recentCheckIns,
+      devices,
+      nextMonthExpiringCount,
+      nextMonthEventsCount,
+      todayBirthdays,
+      tomorrowBirthdays,
+      nextMonthBirthdaysResult,
+      todayRevenueAgg,
+      thisMonthRevenueAgg,
+      outstandingBalanceAgg,
+    ] = await Promise.all([
+      // 1. Single consolidated Member Status GroupBy (replaces 5 separate count queries)
+      prisma.member.groupBy({
+        by: ["status"],
+        where: { tenantId, isDeleted: false },
+        _count: { _all: true },
+      }),
+      // 2. Pending walk-in members (lean fields)
       prisma.member.findMany({
         where: { tenantId, status: MemberStatus.LEAD, isDeleted: false },
         take: 10,
@@ -54,19 +81,14 @@ export async function GET(req: NextRequest) {
           whatsappNumber: true,
           gender: true,
           dateOfBirth: true,
-          healthMetrics: true,
           createdAt: true,
-          notes: true,
-          customFields: true,
         },
       }),
-    ]);
-
-    // 2. Attendance (Streamlined without unused payment aggregations)
-    const [todayCheckIns, recentCheckIns] = await Promise.all([
+      // 3. Today attendance count
       prisma.attendanceRecord.count({
         where: { tenantId, punchTime: { gte: todayStart, lte: todayEnd } },
       }),
+      // 4. Recent attendance punches
       prisma.attendanceRecord.findMany({
         where: { tenantId, punchTime: { gte: todayStart } },
         take: 10,
@@ -77,60 +99,18 @@ export async function GET(req: NextRequest) {
           },
         },
       }),
-    ]);
-
-    // 4. Birthdays (find members whose DOB month & day match today)
-    const currentMonth = now.getMonth() + 1;
-    const currentDay = now.getDate();
-
-    // Query members with DOB
-    const allMembersWithDob = await prisma.member.findMany({
-      where: {
-        tenantId,
-        isDeleted: false,
-        dateOfBirth: { not: null },
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        memberCode: true,
-        phone: true,
-        dateOfBirth: true,
-        photoUrl: true,
-      },
-    });
-
-    const todayBirthdays = allMembersWithDob.filter((m) => {
-      if (!m.dateOfBirth) return false;
-      const d = new Date(m.dateOfBirth);
-      return d.getUTCMonth() + 1 === currentMonth && d.getUTCDate() === currentDay;
-    });
-
-    const tomorrowBirthdays = allMembersWithDob.filter((m) => {
-      if (!m.dateOfBirth) return false;
-      const d = new Date(m.dateOfBirth);
-      return d.getUTCMonth() + 1 === currentMonth && d.getUTCDate() === currentDay + 1;
-    });
-
-    // 5. Hardware Device Status
-    const devices = await prisma.device.findMany({
-      where: { tenantId },
-      select: {
-        id: true,
-        deviceName: true,
-        serialNumber: true,
-        isOnline: true,
-        lastHeartbeatAt: true,
-      },
-    });
-
-    // 6. Upcoming Month Forecast Outlook
-    const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
-    const nextMonthIndex = nextMonthDate.getMonth();
-
-    const [nextMonthExpiringCount, nextMonthEventsCount] = await Promise.all([
+      // 5. Hardware Device Status
+      prisma.device.findMany({
+        where: { tenantId },
+        select: {
+          id: true,
+          deviceName: true,
+          serialNumber: true,
+          isOnline: true,
+          lastHeartbeatAt: true,
+        },
+      }),
+      // 6. Next Month Expiring Memberships
       prisma.membership.count({
         where: {
           tenantId,
@@ -138,6 +118,7 @@ export async function GET(req: NextRequest) {
           endDate: { gte: nextMonthDate, lte: nextMonthEnd },
         },
       }),
+      // 7. Next Month Calendar Events
       prisma.calendarEvent.count({
         where: {
           tenantId,
@@ -147,13 +128,71 @@ export async function GET(req: NextRequest) {
           ],
         },
       }),
+      // 8. Direct SQL Birthday Extraction for Today (replaces loading all members)
+      prisma.$queryRaw<any[]>`
+        SELECT id, first_name AS "firstName", last_name AS "lastName", member_code AS "memberCode", phone, date_of_birth AS "dateOfBirth", photo_url AS "photoUrl"
+        FROM members
+        WHERE tenant_id = ${tenantId}
+          AND is_deleted = false
+          AND date_of_birth IS NOT NULL
+          AND EXTRACT(MONTH FROM date_of_birth) = ${currentMonth}
+          AND EXTRACT(DAY FROM date_of_birth) = ${currentDay}
+        LIMIT 20
+      `,
+      // 9. Direct SQL Birthday Extraction for Tomorrow
+      prisma.$queryRaw<any[]>`
+        SELECT id, first_name AS "firstName", last_name AS "lastName", member_code AS "memberCode", phone, date_of_birth AS "dateOfBirth", photo_url AS "photoUrl"
+        FROM members
+        WHERE tenant_id = ${tenantId}
+          AND is_deleted = false
+          AND date_of_birth IS NOT NULL
+          AND EXTRACT(MONTH FROM date_of_birth) = ${tomorrowMonth}
+          AND EXTRACT(DAY FROM date_of_birth) = ${tomorrowDay}
+        LIMIT 20
+      `,
+      // 10. Direct SQL Count for Next Month Birthdays
+      prisma.$queryRaw<{ count: number }[]>`
+        SELECT COUNT(*)::int AS count
+        FROM members
+        WHERE tenant_id = ${tenantId}
+          AND is_deleted = false
+          AND date_of_birth IS NOT NULL
+          AND EXTRACT(MONTH FROM date_of_birth) = ${nextMonthNumber}
+      `,
+      // 11. Live Today Revenue Aggregate
+      prisma.payment.aggregate({
+        where: { tenantId, paymentDate: { gte: todayStart, lte: todayEnd } },
+        _sum: { amount: true },
+      }),
+      // 12. Live This Month Revenue Aggregate
+      prisma.payment.aggregate({
+        where: { tenantId, paymentDate: { gte: monthStart } },
+        _sum: { amount: true },
+      }),
+      // 13. Live Outstanding Balance Aggregate
+      prisma.invoice.aggregate({
+        where: { tenantId, status: { in: [InvoiceStatus.ISSUED, InvoiceStatus.PARTIALLY_PAID] } },
+        _sum: { balanceAmount: true },
+      }),
     ]);
 
-    const nextMonthBirthdaysCount = allMembersWithDob.filter((m) => {
-      if (!m.dateOfBirth) return false;
-      const d = new Date(m.dateOfBirth);
-      return d.getUTCMonth() === nextMonthIndex;
-    }).length;
+    // Aggregate member counts from single groupBy
+    let totalMembers = 0;
+    let activeMembers = 0;
+    let expiringSoonMembers = 0;
+    let expiredMembers = 0;
+    let pendingMembersCount = 0;
+
+    for (const group of statusGroups) {
+      const count = group._count._all;
+      totalMembers += count;
+      if (group.status === MemberStatus.ACTIVE) activeMembers = count;
+      else if (group.status === MemberStatus.EXPIRING_SOON) expiringSoonMembers = count;
+      else if (group.status === MemberStatus.EXPIRED) expiredMembers = count;
+      else if (group.status === MemberStatus.LEAD) pendingMembersCount = count;
+    }
+
+    const nextMonthBirthdaysCount = Number(nextMonthBirthdaysResult[0]?.count || 0);
 
     const upcomingMonth = {
       monthName: nextMonthDate.toLocaleString("default", { month: "long" }),
@@ -176,9 +215,9 @@ export async function GET(req: NextRequest) {
         list: pendingMembersList,
       },
       revenue: {
-        today: 0,
-        thisMonth: 0,
-        outstandingBalance: 0,
+        today: Number(todayRevenueAgg._sum.amount || 0),
+        thisMonth: Number(thisMonthRevenueAgg._sum.amount || 0),
+        outstandingBalance: Number(outstandingBalanceAgg._sum.balanceAmount || 0),
       },
       attendance: {
         todayCheckIns,
@@ -195,7 +234,8 @@ export async function GET(req: NextRequest) {
     statsCache.set(tenantId, { data: statsPayload, timestamp: Date.now() });
 
     const res = apiSuccess(statsPayload);
-    res.headers.set("Cache-Control", "private, max-age=15, stale-while-revalidate=30");
+    res.headers.set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+    res.headers.set("Pragma", "no-cache");
     return res;
   } catch (error: any) {
     console.error("Dashboard Stats API Error:", error);

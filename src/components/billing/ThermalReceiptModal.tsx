@@ -48,11 +48,17 @@ export function ThermalReceiptModal({ isOpen, onClose, invoice, tenant }: Therma
           {/* Header */}
           <div className="text-center space-y-1">
             <div className="text-base font-black tracking-tight uppercase">
-              {tenant?.businessName || "FITZONE ELITE CLUB"}
+              {tenant?.businessName || "Be Free Fitness"}
             </div>
-            <div className="text-[11px] text-slate-600">Connaught Place, New Delhi - 110001</div>
-            <div className="text-[11px] font-bold">GSTIN: {tenant?.gstin || "07AAAAF1234F1Z5"}</div>
-            <div className="text-[10px] text-slate-500">Ph: {tenant?.phone || "+91 9876543210"}</div>
+            <div className="text-[11px] text-slate-600">
+              {tenant?.address
+                ? typeof tenant.address === "string"
+                  ? tenant.address
+                  : [tenant.address.line1, tenant.address.city, tenant.address.state, tenant.address.pincode].filter(Boolean).join(", ")
+                : "Himachal Pradesh, India"}
+            </div>
+            <div className="text-[11px] font-bold">GSTIN: {tenant?.gstin || "N/A (Exempt/Composition)"}</div>
+            <div className="text-[10px] text-slate-500">Ph: {tenant?.phone || "+91 98160 00000"}</div>
           </div>
 
           <div className="border-t border-dashed border-slate-300 my-2" />

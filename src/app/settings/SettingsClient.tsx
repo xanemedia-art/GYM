@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { UpiStandeeCard } from "@/components/settings/UpiStandeeCard";
 import { PushNotificationSettingsCard } from "@/components/notifications/PushNotificationSettingsCard";
+import { StaffManagementSection } from "@/components/settings/StaffManagementSection";
+import { clearClientCache } from "@/lib/client-cache";
 import {
   Settings,
   Building2,
@@ -95,6 +97,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
       });
       const json = await res.json();
       if (json.success) {
+        clearClientCache();
         window.location.reload();
       } else {
         alert(json.error?.message || "Failed to switch branch");
@@ -387,6 +390,14 @@ export default function SettingsClient({ user }: SettingsClientProps) {
           </div>
         </div>
 
+        {/* 2. Staff Logins & Branch Permissions (For Gym Owner) */}
+        {isOwnerOrAdmin && (
+          <StaffManagementSection
+            branches={branches.map((b) => ({ id: b.id, slug: b.slug, businessName: b.businessName }))}
+            currentTenantId={tenant?.id}
+          />
+        )}
+
         {/* Form for current branch settings */}
         <form onSubmit={handleSave} className="space-y-6">
           {/* Active Branch Profile */}
@@ -599,7 +610,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                     <input
                       required
                       type="text"
-                      placeholder="e.g. fitzone-hyderabad"
+                      placeholder="e.g. be-free-fitness-kullu"
                       value={branchForm.slug}
                       onChange={(e) => setBranchForm({ ...branchForm, slug: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
@@ -651,7 +662,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                     <input
                       required
                       type="email"
-                      placeholder="hyderabad@fitzone.in"
+                      placeholder="kullu@befreefitness.in"
                       value={branchForm.email}
                       onChange={(e) => setBranchForm({ ...branchForm, email: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"

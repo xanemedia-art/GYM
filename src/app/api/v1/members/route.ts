@@ -25,6 +25,26 @@ const createMemberSchema = z.object({
   doorLockUid: z.string().optional().nullable().or(z.literal("")),
 });
 
+interface MemberCacheEntry {
+  data: any;
+  meta: any;
+  timestamp: number;
+}
+const membersListCache = new Map<string, MemberCacheEntry>();
+const MEMBERS_CACHE_TTL_MS = 2000; // 2 seconds micro-debounce for ultra-live accuracy
+
+export function invalidateMembersCache(tenantId?: string) {
+  if (tenantId) {
+    for (const key of membersListCache.keys()) {
+      if (key.startsWith(tenantId)) {
+        membersListCache.delete(key);
+      }
+    }
+  } else {
+    membersListCache.clear();
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
@@ -38,6 +58,16 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
     const skip = (page - 1) * limit;
+    const isFresh = searchParams.get("fresh") === "true";
+
+    const cacheKey = `${session.tenantId}:${page}:${limit}:${search}:${status || "all"}`;
+    const cached = membersListCache.get(cacheKey);
+
+    if (!isFresh && cached && Date.now() - cached.timestamp < MEMBERS_CACHE_TTL_MS) {
+      const res = apiSuccess(cached.data, cached.meta);
+      res.headers.set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+      return res;
+    }
 
     const tenantDb = getTenantPrisma(session.tenantId);
 
@@ -67,7 +97,20 @@ export async function GET(req: NextRequest) {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          memberCode: true,
+          firstName: true,
+          lastName: true,
+          gender: true,
+          phone: true,
+          whatsappNumber: true,
+          email: true,
+          dateOfBirth: true,
+          photoUrl: true,
+          status: true,
+          customFields: true,
+          createdAt: true,
           assignedTrainer: {
             select: { id: true, fullName: true },
           },
@@ -75,9 +118,13 @@ export async function GET(req: NextRequest) {
             where: { status: "ACTIVE" },
             take: 1,
             orderBy: { endDate: "desc" },
-            include: {
+            select: {
+              id: true,
+              startDate: true,
+              endDate: true,
+              status: true,
               planVersion: {
-                include: {
+                select: {
                   plan: { select: { name: true } },
                 },
               },
@@ -87,7 +134,16 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    return apiSuccess(members, { page, limit, total });
+    const meta = { page, limit, total };
+    membersListCache.set(cacheKey, {
+      data: members,
+      meta,
+      timestamp: Date.now(),
+    });
+
+    const res = apiSuccess(members, meta);
+    res.headers.set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+    return res;
   } catch (error: any) {
     console.error("List Members API Error:", error);
     return apiError("Failed to fetch members list", "SERVER_ERROR", 500);
@@ -232,6 +288,8 @@ export async function POST(req: NextRequest) {
     } catch (auditErr) {
       console.warn("Audit log creation non-fatal error:", auditErr);
     }
+
+    invalidateMembersCache(session.tenantId);
 
     return apiSuccess(member, undefined, 201);
   } catch (error: any) {
