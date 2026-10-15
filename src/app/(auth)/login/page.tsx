@@ -29,8 +29,7 @@ export default function LoginPage() {
         throw new Error(data.error?.message || "Invalid login credentials");
       }
 
-      router.push("/portal");
-      router.refresh();
+      window.location.href = "/portal";
     } catch (err: any) {
       setError(err.message);
     } finally {
